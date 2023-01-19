@@ -1,0 +1,33 @@
+syntax = "proto3";
+package mailProto;
+option go_package = "/grpc-mail";
+
+message Mail {
+  string name = 1;
+  string email_address=2;
+  string email_subject=3;
+  string email_body=4;
+}
+
+message BatchMail {
+  string name = 1;
+  repeated string email_addresses=2;
+  string email_subject=3;
+  string email_body=4;
+}
+
+message MailRequest {
+  Mail mailEntry =1 ;
+}
+message BatchMailRequest {
+  BatchMail batchMailEntry =1 ;
+}
+
+message MailResponse {
+  string result = 1;
+}
+
+service MailService {
+  rpc SendEmail(MailRequest) returns (MailResponse);
+  rpc SendBatchEmails(BatchMailRequest) returns (MailResponse);
+}
