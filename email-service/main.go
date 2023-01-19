@@ -5,11 +5,12 @@ import (
 	mail_grpc_mail "emailSrv/internal/grpc-mail"
 	mail_serivce "emailSrv/internal/service/mail-serivce"
 	utility "emailSrv/internal/utils"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+
+	"google.golang.org/grpc"
 )
 
 func main() {
