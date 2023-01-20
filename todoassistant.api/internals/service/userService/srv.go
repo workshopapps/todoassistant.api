@@ -210,8 +210,13 @@ func (u *userSrv) UploadImage(file *multipart.FileHeader, userId string) (*userE
 
 	fileName := fmt.Sprintf("%s/%s.%s", userId, uuid.New().String(), fileType)
 
-	err := u.awsSrv.UploadImage(file, fileName)
+	image, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer image.Close()
 
+	err = u.awsSrv.UploadImage(image, fileName)
 	if err != nil {
 		return nil, err
 	}
