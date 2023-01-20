@@ -13,7 +13,6 @@ import (
 )
 
 func Test_reminderSrv_SetReminder(t *testing.T) {
-
 	taskId := "fd077d56-763b-43ac-9f0e-5fbe6f30cbc1"
 	dsn := os.Getenv("dsn")
 	if dsn == "" {

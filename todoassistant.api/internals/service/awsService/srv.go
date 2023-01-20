@@ -8,22 +8,17 @@ import (
 )
 
 type AWSService interface {
-	UploadImage(file *multipart.FileHeader, filename string) error
+	UploadImage(file multipart.File, filename string) error
 }
 
 type awsSrv struct {
 	s3session *s3.S3
 }
 
-func (a *awsSrv) UploadImage(file *multipart.FileHeader, filename string) error {
-	image, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer image.Close()
+func (a *awsSrv) UploadImage(file multipart.File, filename string) error {
 
-	_, err = a.s3session.PutObject(&s3.PutObjectInput{
-		Body:        image,
+	_, err := a.s3session.PutObject(&s3.PutObjectInput{
+		Body:        file,
 		Bucket:      aws.String("ticked-v1-backend-bucket"),
 		Key:         aws.String(filename),
 		ContentType: aws.String("image/jpeg"),
