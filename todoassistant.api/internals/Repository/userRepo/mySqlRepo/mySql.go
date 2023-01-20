@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"test-va/internals/Repository/userRepo"
 	"test-va/internals/entity/userEntity"
 	"time"
@@ -149,6 +150,7 @@ func (m *mySql) GetById(user_id string) (*userEntity.GetByIdRes, error) {
 }
 
 func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
+	log.Println("from persist",req)
 	stmt := fmt.Sprintf(` INSERT INTO Users(
                    user_id,
                    first_name,
@@ -156,13 +158,10 @@ func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
                    email,
                    phone,
                    password,
-                   gender,
-                   date_of_birth,
                    account_status,
-                   payment_status,
                    date_created
-                   ) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v', '%v', '%v', '%v', '%v')`,
-		req.UserId, req.FirstName, req.LastName, req.Email, req.Phone, req.Password, req.Gender, req.DateOfBirth, req.AccountStatus, req.PaymentStatus, req.DateCreated)
+                   ) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v', '%v')`,
+		req.UserId, req.FirstName, req.LastName, req.Email, req.Phone, req.Password, req.AccountStatus, req.DateCreated)
 
 	_, err := m.conn.Exec(stmt)
 	if err != nil {
@@ -177,7 +176,7 @@ func (m *mySql) UpdateUser(req *userEntity.UpdateUserReq, userId string) error {
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
 	defer cancelFunc()
 
-	stmt := fmt.Sprintf(`UPDATE Users SET 
+	stmt := fmt.Sprintf(`UPDATE Users SET
                  first_name ='%s',
                  last_name='%s',
                  email ='%s',
@@ -197,7 +196,7 @@ func (m *mySql) UpdateImage(userId, fileName string) error {
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
 	defer cancelFunc()
 
-	stmt := fmt.Sprintf(`UPDATE Users SET 
+	stmt := fmt.Sprintf(`UPDATE Users SET
                  avatar = '%s'
                  WHERE user_id ='%s'
                  `, fileName, userId)
