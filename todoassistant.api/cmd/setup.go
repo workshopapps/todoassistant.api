@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	ampq "github.com/rabbitmq/amqp091-go"
 	"log"
 	"math"
 	"net/http"
@@ -39,6 +38,8 @@ import (
 	"test-va/internals/service/validationService"
 	"test-va/utils"
 	"time"
+
+	ampq "github.com/rabbitmq/amqp091-go"
 
 	"github.com/getsentry/sentry-go"
 
@@ -250,7 +251,7 @@ func Setup() {
 
 	// user service
 
-	userSrv := userService.NewUserSrv(userRepo, validationSrv, timeSrv, cryptoSrv, emailSrv, awsSrv, srv)
+	userSrv := userService.NewUserSrv(userRepo, validationSrv, timeSrv, cryptoSrv, emailSrv, awsSrv, srv, emitter)
 
 	//call service
 	callSrv := callService.NewCallSrv(callRepo, timeSrv, validationSrv, logger)
