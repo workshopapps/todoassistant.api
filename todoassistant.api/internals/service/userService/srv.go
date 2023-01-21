@@ -9,7 +9,9 @@ import (
 	"test-va/internals/Repository/userRepo"
 	"test-va/internals/entity/ResponseEntity"
 	"test-va/internals/entity/emailEntity"
+	"test-va/internals/entity/eventEntity"
 	"test-va/internals/entity/userEntity"
+	"test-va/internals/msg-queue/Emitter"
 	"test-va/internals/service/awsService"
 	"test-va/internals/service/cryptoService"
 	"test-va/internals/service/emailService"
@@ -43,6 +45,7 @@ type userSrv struct {
 	emailSrv  emailService.EmailService
 	awsSrv    awsService.AWSService
 	tokenSrv  tokenservice.TokenSrv
+	Emitter   Emitter.Emitter
 }
 
 // Login User godoc
@@ -418,7 +421,22 @@ func (u *userSrv) ResetPassword(req *userEntity.ResetPasswordReq) (*userEntity.R
 	message.EmailSubject = "Subject: Reset Password Token\n"
 	message.EmailBody = CreateMessageBody(user.FirstName, user.LastName, token.Token)
 
-	err = u.emailSrv.SendMail(message)
+	// err = u.emailSrv.SendMail(message)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewInternalServiceError(err)
+	// }
+	// push event to queue
+	payload := eventEntity.Payload{
+		Action:    "email",
+		SubAction: "subscription",
+		Data: map[string]string{
+			"email_address": req.Email,
+			"email_subject": "Subject: Subscription To Ticked Newsletter\n",
+			"email_body":    CreateMessageBody(user.FirstName, user.LastName, token.Token),
+		},
+	}
+
+	err = u.Emitter.Push(payload, "info")
 	if err != nil {
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
@@ -524,7 +542,7 @@ func CreateMessageBody(firstName, lastName, token string) string {
 
 func NewUserSrv(repo userRepo.UserRepository, validator validationService.ValidationSrv, timeSrv timeSrv.TimeService,
 	cryptoSrv cryptoService.CryptoSrv, emailSrv emailService.EmailService, awsSrv awsService.AWSService,
-	tokenSrv tokenservice.TokenSrv) UserSrv {
+	tokenSrv tokenservice.TokenSrv, emitter Emitter.Emitter) UserSrv {
 	return &userSrv{repo: repo, validator: validator, timeSrv: timeSrv,
-		cryptoSrv: cryptoSrv, emailSrv: emailSrv, awsSrv: awsSrv, tokenSrv: tokenSrv}
+		cryptoSrv: cryptoSrv, emailSrv: emailSrv, awsSrv: awsSrv, tokenSrv: tokenSrv, Emitter: emitter}
 }
