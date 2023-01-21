@@ -99,7 +99,7 @@ func (m *mySql) GetUsers(page int) ([]*userEntity.UsersRes, error) {
 
 func (m *mySql) GetByEmail(email string) (*userEntity.GetByEmailRes, error) {
 	query := fmt.Sprintf(`
-		SELECT user_id, email, password, first_name, last_name, phone, gender, avatar
+		SELECT user_id, email, password, first_name, last_name, phone, COALESCE(gender, ''), avatar
 		FROM Users
 		WHERE email = '%s'
 	`, email)
@@ -112,7 +112,6 @@ func (m *mySql) GetByEmail(email string) (*userEntity.GetByEmailRes, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Phone,
-		&user.Gender,
 		&user.Avatar,
 	)
 	if err != nil {
