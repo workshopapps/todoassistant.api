@@ -127,7 +127,7 @@ func (u *userSrv) SaveUser(req *userEntity.CreateUserReq) (*userEntity.CreateUse
 	req.UserId = uuid.New().String()
 	req.Password = password
 	req.AccountStatus = "ACTIVE"
-	req.DateCreated = u.timeSrv.CurrentTime().Format(time.RFC3339)
+	//req.DateCreated = u.timeSrv.CurrentTime().Format(time.RFC3339)
 
 	// save to DB
 	err = u.repo.Persist(req)

@@ -112,6 +112,7 @@ func (m *mySql) GetByEmail(email string) (*userEntity.GetByEmailRes, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Phone,
+		&user.Gender,
 		&user.Avatar,
 	)
 	if err != nil {
@@ -157,10 +158,9 @@ func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
                    email,
                    phone,
                    password,
-                   account_status,
-                   date_created
-                   ) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v', '%v')`,
-		req.UserId, req.FirstName, req.LastName, req.Email, req.Phone, req.Password, req.AccountStatus, req.DateCreated)
+                   account_status
+                   ) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v')`,
+		req.UserId, req.FirstName, req.LastName, req.Email, req.Phone, req.Password, req.AccountStatus)
 
 	_, err := m.conn.Exec(stmt)
 	if err != nil {
