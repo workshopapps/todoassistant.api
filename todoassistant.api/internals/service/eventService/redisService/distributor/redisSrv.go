@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"test-va/internals/service/eventService"
+
+	"github.com/go-redis/redis/v9"
 )
 
 const TaskSendEmail = "send_email"

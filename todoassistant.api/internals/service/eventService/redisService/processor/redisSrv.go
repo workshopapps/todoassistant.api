@@ -6,6 +6,8 @@ import (
 	"test-va/internals/entity/emailEntity"
 	"test-va/internals/service/emailService"
 	"test-va/internals/service/eventService"
+
+	"github.com/go-redis/redis/v9"
 )
 
 type taskProcessor struct {

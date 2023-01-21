@@ -22,6 +22,7 @@ func main() {
 
 	mailHandler, err := handler.NewMailHandler()
 	if err != nil {
+		log.Println("here")
 		panic(err)
 	}
 	defer mailHandler.CloseConn()
