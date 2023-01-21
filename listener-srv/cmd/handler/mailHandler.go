@@ -2,13 +2,14 @@ package handler
 
 import (
 	"context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"listener-srv/internal/entity/eventEntity"
 	"listener-srv/internal/entity/mailEntity"
 	grpc_mail "listener-srv/internal/grpc-mail"
 	"log"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type MailHandler struct {
@@ -18,7 +19,7 @@ type MailHandler struct {
 func NewMailHandler() (*MailHandler, error) {
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*30)
 	defer cancelFunc()
-	conn, err := grpc.DialContext(ctx, "localhost:5001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, "localhost:7025", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		return nil, err
 	}

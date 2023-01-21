@@ -7,8 +7,8 @@ type CreateUserReq struct {
 	Email         string `json:"email" validate:"email"`
 	Phone         string `json:"phone"`
 	Password      string `json:"password" validate:"required,min=6"`
-	Gender        string `json:"gender"  validate:"required,oneof='Male' 'Female'"`
-	DateOfBirth   string `json:"date_of_birth" validate:"required"`
+	Gender        string `json:"gender"`
+	DateOfBirth   string `json:"date_of_birth"`
 	AccountStatus string `json:"account_status"`
 	PaymentStatus string `json:"payment_status"`
 	DateCreated   string `json:"date_created"`
