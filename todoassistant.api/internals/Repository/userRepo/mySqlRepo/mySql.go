@@ -124,7 +124,7 @@ func (m *mySql) GetByEmail(email string) (*userEntity.GetByEmailRes, error) {
 
 func (m *mySql) GetById(user_id string) (*userEntity.GetByIdRes, error) {
 	query := fmt.Sprintf(`
-		SELECT user_id, password, email, first_name, last_name, phone, gender, avatar
+		SELECT user_id, password, email, first_name, last_name, phone, COALESCE(gender, ''), avatar
 		FROM Users
 		WHERE user_id = '%s'
 	`, user_id)

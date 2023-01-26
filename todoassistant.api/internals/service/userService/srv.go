@@ -251,6 +251,7 @@ func (u *userSrv) UploadImage(file *multipart.FileHeader, userId string) (*userE
 // @Security ApiKeyAuth
 // @Router	/user/{userId}/change-password [put]
 func (u *userSrv) ChangePassword(req *userEntity.ChangePasswordReq) *ResponseEntity.ServiceError {
+
 	err := u.validator.Validate(req)
 	if err != nil {
 		return ResponseEntity.NewValidatingError(err)
@@ -284,6 +285,25 @@ func (u *userSrv) ChangePassword(req *userEntity.ChangePasswordReq) *ResponseEnt
 		return ResponseEntity.NewInternalServiceError("Could not change password!")
 	}
 
+	// send email to user
+	subject := fmt.Sprintf("Hi %v %v, \n\n", user.FirstName, user.LastName)
+	mainBody := subject+"your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
+
+	payload := eventEntity.Payload{
+		Action:    "email",
+		SubAction: "subscription",
+		Data: map[string]string{
+			"email_address": user.Email,
+			"email_subject": "Subject: Password Change Confirmation for getticked\n",
+			"email_body":    mainBody,
+		},
+	}
+
+	err = u.Emitter.Push(payload, "info")
+	if err != nil {
+		//an error can be returned from here but allow am first
+		return nil
+	}
 	return nil
 }
 
@@ -431,7 +451,7 @@ func (u *userSrv) ResetPassword(req *userEntity.ResetPasswordReq) (*userEntity.R
 		SubAction: "subscription",
 		Data: map[string]string{
 			"email_address": req.Email,
-			"email_subject": "Subject: Subscription To Ticked Newsletter\n",
+			"email_subject": "Subject: Request to Reset Password\n",
 			"email_body":    CreateMessageBody(user.FirstName, user.LastName, token.Token),
 		},
 	}
@@ -490,7 +510,25 @@ func (u *userSrv) ResetPasswordWithToken(req *userEntity.ResetPasswordWithTokenR
 	if err != nil {
 		return ResponseEntity.NewInternalServiceError("Could not change password!")
 	}
+		// send email to user
+	subject := fmt.Sprintf("Hi %v %v, \n\n", user.FirstName, user.LastName)
+	mainBody := subject+"your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
 
+	payload := eventEntity.Payload{
+		Action:    "email",
+		SubAction: "subscription",
+		Data: map[string]string{
+			"email_address": user.Email,
+			"email_subject": "Subject: Password Change Confirmation for getticked\n",
+			"email_body":    mainBody,
+		},
+	}
+
+	err = u.Emitter.Push(payload, "info")
+	if err != nil {
+		//an error can be returned from here but allow am first
+		return nil
+	}
 	return nil
 }
 
