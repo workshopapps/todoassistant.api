@@ -9,7 +9,9 @@ import (
 	"test-va/internals/Repository/userRepo"
 	"test-va/internals/entity/ResponseEntity"
 	"test-va/internals/entity/emailEntity"
+	"test-va/internals/entity/eventEntity"
 	"test-va/internals/entity/userEntity"
+	"test-va/internals/msg-queue/Emitter"
 	"test-va/internals/service/awsService"
 	"test-va/internals/service/cryptoService"
 	"test-va/internals/service/emailService"
@@ -43,6 +45,7 @@ type userSrv struct {
 	emailSrv  emailService.EmailService
 	awsSrv    awsService.AWSService
 	tokenSrv  tokenservice.TokenSrv
+	Emitter   Emitter.Emitter
 }
 
 // Login User godoc
@@ -248,6 +251,7 @@ func (u *userSrv) UploadImage(file *multipart.FileHeader, userId string) (*userE
 // @Security ApiKeyAuth
 // @Router	/user/{userId}/change-password [put]
 func (u *userSrv) ChangePassword(req *userEntity.ChangePasswordReq) *ResponseEntity.ServiceError {
+
 	err := u.validator.Validate(req)
 	if err != nil {
 		return ResponseEntity.NewValidatingError(err)
@@ -281,6 +285,25 @@ func (u *userSrv) ChangePassword(req *userEntity.ChangePasswordReq) *ResponseEnt
 		return ResponseEntity.NewInternalServiceError("Could not change password!")
 	}
 
+	// send email to user
+	subject := fmt.Sprintf("Hi %v %v, \n\n", user.FirstName, user.LastName)
+	mainBody := subject+"your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
+
+	payload := eventEntity.Payload{
+		Action:    "email",
+		SubAction: "subscription",
+		Data: map[string]string{
+			"email_address": user.Email,
+			"email_subject": "Subject: Password Change Confirmation for getticked\n",
+			"email_body":    mainBody,
+		},
+	}
+
+	err = u.Emitter.Push(payload, "info")
+	if err != nil {
+		//an error can be returned from here but allow am first
+		return nil
+	}
 	return nil
 }
 
@@ -418,7 +441,22 @@ func (u *userSrv) ResetPassword(req *userEntity.ResetPasswordReq) (*userEntity.R
 	message.EmailSubject = "Subject: Reset Password Token\n"
 	message.EmailBody = CreateMessageBody(user.FirstName, user.LastName, token.Token)
 
-	err = u.emailSrv.SendMail(message)
+	// err = u.emailSrv.SendMail(message)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewInternalServiceError(err)
+	// }
+	// push event to queue
+	payload := eventEntity.Payload{
+		Action:    "email",
+		SubAction: "subscription",
+		Data: map[string]string{
+			"email_address": req.Email,
+			"email_subject": "Subject: Request to Reset Password\n",
+			"email_body":    CreateMessageBody(user.FirstName, user.LastName, token.Token),
+		},
+	}
+
+	err = u.Emitter.Push(payload, "info")
 	if err != nil {
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
@@ -472,7 +510,25 @@ func (u *userSrv) ResetPasswordWithToken(req *userEntity.ResetPasswordWithTokenR
 	if err != nil {
 		return ResponseEntity.NewInternalServiceError("Could not change password!")
 	}
+		// send email to user
+	subject := fmt.Sprintf("Hi %v %v, \n\n", user.FirstName, user.LastName)
+	mainBody := subject+"your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
 
+	payload := eventEntity.Payload{
+		Action:    "email",
+		SubAction: "subscription",
+		Data: map[string]string{
+			"email_address": user.Email,
+			"email_subject": "Subject: Password Change Confirmation for getticked\n",
+			"email_body":    mainBody,
+		},
+	}
+
+	err = u.Emitter.Push(payload, "info")
+	if err != nil {
+		//an error can be returned from here but allow am first
+		return nil
+	}
 	return nil
 }
 
@@ -524,7 +580,7 @@ func CreateMessageBody(firstName, lastName, token string) string {
 
 func NewUserSrv(repo userRepo.UserRepository, validator validationService.ValidationSrv, timeSrv timeSrv.TimeService,
 	cryptoSrv cryptoService.CryptoSrv, emailSrv emailService.EmailService, awsSrv awsService.AWSService,
-	tokenSrv tokenservice.TokenSrv) UserSrv {
+	tokenSrv tokenservice.TokenSrv, emitter Emitter.Emitter) UserSrv {
 	return &userSrv{repo: repo, validator: validator, timeSrv: timeSrv,
-		cryptoSrv: cryptoSrv, emailSrv: emailSrv, awsSrv: awsSrv, tokenSrv: tokenSrv}
+		cryptoSrv: cryptoSrv, emailSrv: emailSrv, awsSrv: awsSrv, tokenSrv: tokenSrv, Emitter: emitter}
 }

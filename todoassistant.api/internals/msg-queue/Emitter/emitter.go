@@ -3,11 +3,12 @@ package Emitter
 import (
 	"context"
 	"encoding/json"
-	"github.com/rabbitmq/amqp091-go"
 	"log"
 	"test-va/internals/entity/eventEntity"
 	"test-va/internals/msg-queue/event"
 	"time"
+
+	"github.com/rabbitmq/amqp091-go"
 )
 
 type Emitter interface {
