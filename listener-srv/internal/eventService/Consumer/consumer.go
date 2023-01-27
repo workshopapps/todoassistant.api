@@ -2,11 +2,12 @@ package Consumer
 
 import (
 	"encoding/json"
-	"github.com/rabbitmq/amqp091-go"
 	"listener-srv/cmd/handler"
 	"listener-srv/internal/entity/eventEntity"
 	"listener-srv/internal/eventService/event"
 	"log"
+
+	"github.com/rabbitmq/amqp091-go"
 )
 
 type Consumer interface {
@@ -30,9 +31,10 @@ func (a amqpConsumer) HandlePayload(payload eventEntity.Payload) {
 		// use mail-grpc to call the mailing service
 		data, err := a.handler.SendMail(payload)
 		if err != nil {
-			log.Println(data.Result)
+			log.Println(err)
 			return
 		}
+		log.Println(data)
 	}
 }
 
