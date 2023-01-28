@@ -22,8 +22,7 @@ jobs:
         go-version: 1.19
 
     - name: Build
-      run: cd ./todoassistant.api
-      run: go build -v ./...
+      run: cd ./todoassistant.api && go build -v ./...
 
     -  name: Start backend install script
        uses: appleboy/ssh-action@master
