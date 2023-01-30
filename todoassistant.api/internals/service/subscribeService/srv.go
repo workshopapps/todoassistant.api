@@ -2,6 +2,7 @@ package subscribeService
 
 import (
 	"context"
+	"log"
 	"test-va/internals/Repository/subscribeRepo"
 	"test-va/internals/entity/ResponseEntity"
 	"test-va/internals/entity/emailEntity"
@@ -45,6 +46,7 @@ func (t *subscribeSrv) PersistEmail(req *subscribeEntity.SubscribeReq) (*subscri
 	defer cancelFunc()
 
 	result, err1 := t.repo.CheckEmail(ctx, req)
+
 	if result != nil {
 		return nil, ResponseEntity.NewCustomServiceError("Already subscribed", err1)
 	}
@@ -58,11 +60,11 @@ func (t *subscribeSrv) PersistEmail(req *subscribeEntity.SubscribeReq) (*subscri
 	//	return nil, ResponseEntity.NewInternalServiceError(err)
 	//}
 
-	//err := t.repo.PersistEmail(ctx, req)
-	//if err != nil {
-	//	log.Println("From subscribe ", err)
-	//	return nil, ResponseEntity.NewInternalServiceError(err)
-	//}
+	err := t.repo.PersistEmail(ctx, req)
+	if err != nil {
+		log.Println("From subscribe ", err)
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
 	data := subscribeEntity.SubscribeRes{
 		Email: req.Email,
 	}
@@ -78,7 +80,7 @@ func (t *subscribeSrv) PersistEmail(req *subscribeEntity.SubscribeReq) (*subscri
 		},
 	}
 
-	err := t.Emitter.Push(payload, "info")
+	err = t.Emitter.Push(payload, "info")
 	if err != nil {
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}

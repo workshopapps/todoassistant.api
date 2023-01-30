@@ -37,7 +37,7 @@ func (s *sqlSubscribeRepo) PersistEmail(ctx context.Context, req *subscribeEntit
 	VALUES ('%v')
 	`, req.Email)
 	_, err := s.conn.Exec(stmt)
-
+	log.Println("loging email",req.Email)
 	if err != nil {
 		log.Println(err)
 		return err
