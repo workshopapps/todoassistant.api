@@ -2,6 +2,7 @@ package subscribeService
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"test-va/internals/Repository/subscribeRepo"
 	"test-va/internals/entity/ResponseEntity"
@@ -15,6 +16,7 @@ import (
 
 type SubscribeService interface {
 	PersistEmail(req *subscribeEntity.SubscribeReq) (*subscribeEntity.SubscribeRes, *ResponseEntity.ServiceError)
+	Contact(req *subscribeEntity.ContactUsReq) (*subscribeEntity.ContactUsRes, *ResponseEntity.ServiceError)
 }
 
 type subscribeSrv struct {
@@ -88,11 +90,64 @@ func (t *subscribeSrv) PersistEmail(req *subscribeEntity.SubscribeReq) (*subscri
 	return &data, nil
 }
 
+// Contact us godoc
+// @Summary	Contact us with any complaint or feedback
+// @Description	Contact us route
+// @Tags	Contact-Us
+// @Accept	json
+// @Produce	json
+// @Param	request	body	subscribeEntity.ContactUsReq	true	"Contact Us request"
+// @Success	200  {object}  subscribeEntity.ContactUsRes
+// @Failure	400  {object}  ResponseEntity.ServiceError
+// @Failure	404  {object}  ResponseEntity.ServiceError
+// @Failure	500  {object}  ResponseEntity.ServiceError
+// @Router	/contact-us [post]
+func (t *subscribeSrv) Contact(req *subscribeEntity.ContactUsReq) (*subscribeEntity.ContactUsRes, *ResponseEntity.ServiceError) {
+	// create context of 1 minute
+	_, cancelFunc := context.WithTimeout(context.TODO(), time.Minute*1)
+	defer cancelFunc()
+
+	// err := t.emailSrv.SendMailToSupport(message)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewInternalServiceError(err)
+	// }
+
+	data := subscribeEntity.ContactUsRes{
+		Email:   req.Email,
+		Name:    req.Name,
+		Message: req.Message,
+	}
+
+	// push event to queue
+	payload := eventEntity.Payload{
+		Action:    "email",
+		SubAction: "contact-us",
+		Data: map[string]string{
+			"email_address": "admin@getticked.com",
+			"email_subject": fmt.Sprintf("Subject: %s (%s)\n", req.Name, req.Email),
+			"email_body":    CreateMessageBodySupport(req),
+		},
+	}
+
+	err := t.Emitter.Push(payload, "info")
+	if err != nil {
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+
+	return &data, nil
+}
+
 // Auxillary function
 func CreateMessageBody() string {
 	subject := "Subscription to Ticked!\n\n"
 	mainBody := "Thank you for subscribing to our newsletter!\n\nGet ready for an awesome ride"
-
 	message := subject + mainBody
+	return string(message)
+}
+
+func CreateMessageBodySupport(req *subscribeEntity.ContactUsReq) string {
+	subject := fmt.Sprintf("Subject: %s (%s)\n", req.Name, req.Email)
+	// title := "" // fmt.Sprintf("Feedback from %s\n\n", req.Email)
+	message := subject + req.Message
 	return string(message)
 }
