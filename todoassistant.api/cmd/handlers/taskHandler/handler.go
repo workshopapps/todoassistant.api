@@ -368,6 +368,7 @@ func (t *taskHandler) GetAllTasksAssignedForVa(c *gin.Context) {
 func (t *taskHandler) CreateComment(c *gin.Context) {
 	var req taskEntity.CreateCommentReq
 	value := c.GetString("userId")
+
 	log.Println("value is: ", value)
 	if value == "" {
 		log.Println("112")
@@ -380,7 +381,6 @@ func (t *taskHandler) CreateComment(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "error decoding into struct", err, nil))
 		return
 	}
-
 	req.SenderId = value
 	comment, errRes := t.srv.PersistComment(&req)
 	if errRes != nil {
