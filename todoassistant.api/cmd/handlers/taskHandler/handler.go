@@ -8,6 +8,7 @@ import (
 	"test-va/internals/entity/taskEntity"
 	"test-va/internals/entity/userEntity"
 	"test-va/internals/service/taskService"
+	websocketSrv "test-va/internals/service/websocketService"
 
 	"github.com/gin-gonic/gin"
 )
@@ -365,10 +366,22 @@ func (t *taskHandler) GetAllTasksAssignedForVa(c *gin.Context) {
 }
 
 // task comments
+
+//websocket handler
+func (t *taskHandler) HandleWebsocketConnection(c *gin.Context){
+	log.Println("hererere")
+	wsConn, err := websocketSrv.Upgrade(c.Writer, c.Request, nil)
+	 if err != nil {
+        //log.Println(err)
+        return
+    }
+    defer wsConn.Close()
+	log.Println("start sending payloads")
+	websocketSrv.Reader(wsConn)
+}
 func (t *taskHandler) CreateComment(c *gin.Context) {
 	var req taskEntity.CreateCommentReq
 	value := c.GetString("userId")
-
 	log.Println("value is: ", value)
 	if value == "" {
 		log.Println("112")
@@ -381,6 +394,7 @@ func (t *taskHandler) CreateComment(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "error decoding into struct", err, nil))
 		return
 	}
+
 	req.SenderId = value
 	comment, errRes := t.srv.PersistComment(&req)
 	if errRes != nil {

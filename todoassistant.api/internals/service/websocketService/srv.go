@@ -1,16 +1,11 @@
-package websocketService
+package websocketSrv
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 )
-
-type WebSocketSrv interface {
-	Upgrade(w http.ResponseWriter, r *http.Request, h http.Header) (*websocket.Conn, error)
-}
-
-type websocketSrv struct{}
 
 var upgrader = websocket.Upgrader{
     ReadBufferSize:  1024,
@@ -18,8 +13,8 @@ var upgrader = websocket.Upgrader{
     CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-
-func (ws *websocketSrv) Upgrade(w http.ResponseWriter, r *http.Request, h http.Header) (*websocket.Conn, error) {
+func  Upgrade(w http.ResponseWriter, r *http.Request, h http.Header) (*websocket.Conn, error) {
+	log.Println("In Here")
 	conn, err := upgrader.Upgrade(w, r, h)
 	if err != nil {
 		return nil, err
@@ -28,6 +23,19 @@ func (ws *websocketSrv) Upgrade(w http.ResponseWriter, r *http.Request, h http.H
 	return conn, nil
 }
 
-func NewWebSocketSrv() WebSocketSrv {
-	return &websocketSrv{}
+func Reader(conn *websocket.Conn) {
+    for {
+        messageType, p, err := conn.ReadMessage()
+        if err != nil {
+            log.Println(err)
+            return
+        }
+		log.Println(messageType)
+        log.Println(string(p))
+
+        if err := conn.WriteMessage(messageType, p); err != nil {
+            log.Println(err)
+            return
+        }
+    }
 }

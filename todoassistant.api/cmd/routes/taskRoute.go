@@ -19,6 +19,8 @@ func TaskRoutes(v1 *gin.RouterGroup, service taskService.TaskService, srv tokens
 	task := v1.Group("/task")
 	task2 := v1.Group("/task")
 
+		// comments websocket
+		task.GET("/comment/ws", handler.HandleWebsocketConnection)
 	task.Use(jwtMWare.ValidateJWT())
 	{
 		task.POST("", handler.CreateTask)
@@ -35,6 +37,8 @@ func TaskRoutes(v1 *gin.RouterGroup, service taskService.TaskService, srv tokens
 		task.GET("/comment/:taskId", handler.GetComments)         //get all comment on task
 		task.GET("/comment/all", handler.GetAllComments)          //get all comment available
 		task.DELETE("/comment/:commentId", handler.DeleteComment) //delete comment
+
+
 
 		//task.PUT("/comment", handler.CreateComment)   //edit comment
 		task.PUT("/:taskId", handler.EditTaskById) //EditTaskById
