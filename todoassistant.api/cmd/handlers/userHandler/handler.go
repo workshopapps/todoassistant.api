@@ -29,6 +29,7 @@ func (u *userHandler) CreateUser(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Input Data", err, nil))
 		return
 	}
+
 	user, errorRes := u.srv.SaveUser(&req)
 	if errorRes != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Failed To Save User", errorRes, nil))

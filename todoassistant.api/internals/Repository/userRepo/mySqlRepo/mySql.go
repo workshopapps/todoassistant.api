@@ -150,7 +150,7 @@ func (m *mySql) GetById(user_id string) (*userEntity.GetByIdRes, error) {
 }
 
 func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
-	log.Println("from persist",req)
+	log.Println("from persist", req)
 	stmt := fmt.Sprintf(` INSERT INTO Users(
                    user_id,
                    first_name,
@@ -166,11 +166,78 @@ func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
 	if err != nil {
 		return err
 	}
+
+	err = m.userSettings(req.UserId)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// Create function to update user in database
+// Create User Settings
+func (m *mySql) userSettings(userId string) error {
+	nId, err := m.notificationSettings(userId)
+	if err != nil {
+		return err
+	}
 
+	pId, err := m.productEmailSettings(userId)
+	if err != nil {
+		return err
+	}
+
+	stmt := fmt.Sprintf(`INSERT INTO User_Settings(
+		user_id,
+		notification_settings_id
+    	product_email_settings_id INT
+	) VALUES('%v', '%v', '%v')`, userId, nId, pId)
+
+	_, err = m.conn.Exec(stmt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Create Notification Settings
+func (m *mySql) notificationSettings(userId string) (int, error) {
+	stmt := fmt.Sprintf(`INSERT INTO Notification_Settings(
+		user_id
+	) VALUES('%v')`, userId)
+
+	result, err := m.conn.Exec(stmt)
+	if err != nil {
+		return 0, err
+	}
+
+	resultId, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(resultId), nil
+}
+
+// Create Product Email Settings
+func (m *mySql) productEmailSettings(userId string) (int, error) {
+	stmt := fmt.Sprintf(`INSERT INTO Product_Email_Settings(
+		user_id
+	) VALUES('%v')`, userId)
+
+	result, err := m.conn.Exec(stmt)
+	if err != nil {
+		return 0, err
+	}
+
+	resultId, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(resultId), nil
+}
+
+// Create function to update user in database
 func (m *mySql) UpdateUser(req *userEntity.UpdateUserReq, userId string) error {
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
 	defer cancelFunc()
@@ -208,18 +275,18 @@ func (m *mySql) UpdateImage(userId, fileName string) error {
 }
 
 // Auxillary function to update user
-func updateField(tx *sql.Tx, userId string, field string, val interface{}) (sql.Result, error) {
-	return tx.Exec(fmt.Sprintf(`UPDATE Users SET %s = '%v' WHERE user_id = '%v'`, field, val, userId))
-}
+// func updateField(tx *sql.Tx, userId string, field string, val interface{}) (sql.Result, error) {
+// 	return tx.Exec(fmt.Sprintf(`UPDATE Users SET %s = '%v' WHERE user_id = '%v'`, field, val, userId))
+// }
 
-// Auxillary function to update user
-func updateFieldIfSet(tx *sql.Tx, userId string, field string, val interface{}) (sql.Result, error) {
-	v, ok := val.(string)
-	if ok && v != "" {
-		return updateField(tx, userId, field, v)
-	}
-	return nil, nil
-}
+// // Auxillary function to update user
+// func updateFieldIfSet(tx *sql.Tx, userId string, field string, val interface{}) (sql.Result, error) {
+// 	v, ok := val.(string)
+// 	if ok && v != "" {
+// 		return updateField(tx, userId, field, v)
+// 	}
+// 	return nil, nil
+// }
 
 func (m *mySql) ChangePassword(user_id, newPassword string) error {
 	query := fmt.Sprintf(`UPDATE Users SET password = '%v' WHERE user_id = '%v'`, newPassword, user_id)
