@@ -165,7 +165,7 @@ func (n notificationSrv) SendNotification(token, title string, body, data interf
 // @Security ApiKeyAuth
 // @Router	/notification [post]
 func (n notificationSrv) RegisterForNotifications(req *notificationEntity.CreateNotification) *ResponseEntity.ServiceError {
-	err := n.validator.Validate(req)
+	err := n.validator.Validate(&req)
 	if err != nil {
 		return ResponseEntity.NewValidatingError(err)
 	}

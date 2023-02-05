@@ -25,10 +25,6 @@ func (m *mySql) GetTaskDetailsWhenDue(userId string) (*notificationEntity.GetExp
 	panic("Impl me")
 }
 
-func NewMySqlNotificationRepo(conn *sql.DB) notificationRepo.NotificationRepository {
-	return &mySql{conn: conn}
-}
-
 func (m *mySql) Persist(req *notificationEntity.CreateNotification) error {
 	stmt := fmt.Sprintf(` 
 		INSERT INTO Notification_Tokens(
@@ -271,4 +267,8 @@ func (n *mySql) UpdateNotification(notificationId string) error {
 		return err
 	}
 	return nil
+}
+
+func NewMySqlNotificationRepo(conn *sql.DB) notificationRepo.NotificationRepository {
+	return &mySql{conn: conn}
 }

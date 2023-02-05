@@ -287,7 +287,7 @@ func (u *userSrv) ChangePassword(req *userEntity.ChangePasswordReq) *ResponseEnt
 
 	// send email to user
 	subject := fmt.Sprintf("Hi %v %v, \n\n", user.FirstName, user.LastName)
-	mainBody := subject+"your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
+	mainBody := subject + "your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
 
 	payload := eventEntity.Payload{
 		Action:    "email",
@@ -510,9 +510,9 @@ func (u *userSrv) ResetPasswordWithToken(req *userEntity.ResetPasswordWithTokenR
 	if err != nil {
 		return ResponseEntity.NewInternalServiceError("Could not change password!")
 	}
-		// send email to user
+	// send email to user
 	subject := fmt.Sprintf("Hi %v %v, \n\n", user.FirstName, user.LastName)
-	mainBody := subject+"your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
+	mainBody := subject + "your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
 
 	payload := eventEntity.Payload{
 		Action:    "email",
