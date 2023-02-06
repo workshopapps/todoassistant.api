@@ -80,6 +80,12 @@ func (u *userSrv) Login(req *userEntity.LoginReq) (*userEntity.LoginRes, *Respon
 	if errToken != nil {
 		return nil, ResponseEntity.NewInternalServiceError("Cannot create access token!")
 	}
+	notificationSettings, _ := u.repo.GetNotificationSettingsById(user.UserId)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewInternalServiceError("unable to get notification settings")
+	// }
+	productEmailSettings, _ := u.repo.GetProductEmailSettingsById(user.UserId)
+	log.Println(notificationSettings)
 
 	loggedInUser := userEntity.LoginRes{
 		UserId:       user.UserId,
@@ -89,6 +95,8 @@ func (u *userSrv) Login(req *userEntity.LoginReq) (*userEntity.LoginRes, *Respon
 		Phone:        user.Phone,
 		Gender:       user.Gender,
 		Avatar:       user.Avatar,
+		NotificationSettings: *notificationSettings,
+		ProductEmailSettings: *productEmailSettings,
 		Token:        token,
 		RefreshToken: refreshToken,
 	}

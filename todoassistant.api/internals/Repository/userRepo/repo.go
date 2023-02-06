@@ -17,4 +17,7 @@ type UserRepository interface {
 	GetTokenById(token, userId string) (*userEntity.ResetPasswordWithTokenRes, error)
 	DeleteToken(tokenId string) error
 	AssignVAToUser(user_id, token_id string) error
+	//user settings functions
+	GetNotificationSettingsById(userId string) (*userEntity.NotificationSettingsRes, error)
+	GetProductEmailSettingsById(userId string) (*userEntity.ProductEmailSettingsRes, error)
 }
