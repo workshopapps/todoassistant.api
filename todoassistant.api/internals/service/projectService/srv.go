@@ -10,6 +10,8 @@ import (
 	"test-va/internals/service/timeSrv"
 	"test-va/internals/service/validationService"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type ProjectService interface {
@@ -28,7 +30,7 @@ func NewProjectSrv(repo projectRepo.ProjectRepository, timeSrv timeSrv.TimeServi
 }
 
 func (p *projectSrv) PersistProject(req *projectEntity.CreateProjectReq)(*projectEntity.CreateProjectRes, *ResponseEntity.ServiceError){
-	_, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
 	defer cancelFunc()
 
 	err := p.validationSrv.Validate(req)
@@ -36,5 +38,21 @@ func (p *projectSrv) PersistProject(req *projectEntity.CreateProjectReq)(*projec
 		log.Println(err)
 		return nil, ResponseEntity.NewValidatingError("Bad Data Input")
 	}
-	return nil,nil
+	//set created time
+	req.CreatedAt = p.timeSrv.CurrentTime().Format(time.RFC3339)
+	req.ProjectId = uuid.New().String()
+
+	err = p.repo.PersistProject(ctx, req)
+	if err != nil {
+			log.Println(err)
+			return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+
+	data := projectEntity.CreateProjectRes{
+		ProjectId: req.ProjectId,
+		UserId: req.UserId,
+		Title: req.Title,
+		Color: req.Color,
+	}
+	return &data,nil
 }

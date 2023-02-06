@@ -24,11 +24,28 @@ func (p *projectHandler) CreateProject(c *gin.Context){
 	value := c.GetString("userId")
 	log.Println("userId is: ", value)
 	if value == "" {
-		log.Println("112")
+
 		c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "you are not allowed to access this resource", nil, nil))
 		return
 	}
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "error decoding into struct", err, nil))
+		return
+	}
+	req.UserId = value
 	log.Println("create project req",req)
+
+	project, errRes := p.srv.PersistProject(&req)
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "error creating Project", errRes, nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, project)
 }
 
 
