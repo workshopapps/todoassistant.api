@@ -151,6 +151,13 @@ func (m *mySql) GetById(user_id string) (*userEntity.GetByIdRes, error) {
 
 func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
 	log.Println("from persist", req)
+	ctx := context.Background()
+	tx, err := m.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	
 	stmt := fmt.Sprintf(` INSERT INTO Users(
                    user_id,
                    first_name,
@@ -162,13 +169,17 @@ func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
                    ) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v')`,
 		req.UserId, req.FirstName, req.LastName, req.Email, req.Phone, req.Password, req.AccountStatus)
 
-	_, err := m.conn.Exec(stmt)
+	_, err = tx.ExecContext(ctx, stmt)
 	if err != nil {
 		return err
 	}
 
-	err = m.userSettings(req.UserId)
+	err = m.userSettings(ctx, tx, req.UserId)
 	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 
@@ -176,13 +187,23 @@ func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
 }
 
 // Create User Settings
-func (m *mySql) userSettings(userId string) error {
-	nId, err := m.notificationSettings(userId)
+func (m *mySql) userSettings(ctx context.Context, tx *sql.Tx, userId string) error {
+	notiResult, err := m.notificationSettings(ctx, tx, userId)
 	if err != nil {
 		return err
 	}
 
-	pId, err := m.productEmailSettings(userId)
+	nId, err := notiResult.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	prodResult, err := m.productEmailSettings(ctx, tx, userId)
+	if err != nil {
+		return err
+	}
+
+	pId, err := prodResult.LastInsertId()
 	if err != nil {
 		return err
 	}
@@ -193,7 +214,7 @@ func (m *mySql) userSettings(userId string) error {
     	product_email_settings_id INT
 	) VALUES('%v', '%v', '%v')`, userId, nId, pId)
 
-	_, err = m.conn.Exec(stmt)
+	_, err = tx.ExecContext(ctx, stmt)
 	if err != nil {
 		return err
 	}
@@ -202,39 +223,21 @@ func (m *mySql) userSettings(userId string) error {
 }
 
 // Create Notification Settings
-func (m *mySql) notificationSettings(userId string) (int, error) {
+func (m *mySql) notificationSettings(ctx context.Context, tx *sql.Tx, userId string) (sql.Result, error) {
 	stmt := fmt.Sprintf(`INSERT INTO Notification_Settings(
 		user_id
 	) VALUES('%v')`, userId)
 
-	result, err := m.conn.Exec(stmt)
-	if err != nil {
-		return 0, err
-	}
-
-	resultId, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return int(resultId), nil
+	return tx.ExecContext(ctx, stmt)
 }
 
 // Create Product Email Settings
-func (m *mySql) productEmailSettings(userId string) (int, error) {
+func (m *mySql) productEmailSettings(ctx context.Context, tx *sql.Tx, userId string) (sql.Result, error) {
 	stmt := fmt.Sprintf(`INSERT INTO Product_Email_Settings(
 		user_id
 	) VALUES('%v')`, userId)
 
-	result, err := m.conn.Exec(stmt)
-	if err != nil {
-		return 0, err
-	}
-
-	resultId, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return int(resultId), nil
+	return tx.ExecContext(ctx, stmt)
 }
 
 // Create function to update user in database
