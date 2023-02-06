@@ -157,7 +157,7 @@ func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
 		return err
 	}
 	defer tx.Rollback()
-	
+
 	stmt := fmt.Sprintf(` INSERT INTO Users(
                    user_id,
                    first_name,
@@ -192,6 +192,7 @@ func (m *mySql) userSettings(ctx context.Context, tx *sql.Tx, userId string) err
 	if err != nil {
 		return err
 	}
+	log.Println("Passed notification")
 
 	nId, err := notiResult.LastInsertId()
 	if err != nil {
@@ -210,8 +211,8 @@ func (m *mySql) userSettings(ctx context.Context, tx *sql.Tx, userId string) err
 
 	stmt := fmt.Sprintf(`INSERT INTO User_Settings(
 		user_id,
-		notification_settings_id
-    	product_email_settings_id INT
+		notification_settings_id,
+    	product_email_settings_id
 	) VALUES('%v', '%v', '%v')`, userId, nId, pId)
 
 	_, err = tx.ExecContext(ctx, stmt)
