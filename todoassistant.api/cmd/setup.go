@@ -13,6 +13,7 @@ import (
 	"test-va/cmd/routes"
 	mySqlCallRepo "test-va/internals/Repository/callRepo/mySqlRepo"
 	mySqlNotifRepo "test-va/internals/Repository/notificationRepo/mysqlRepo"
+	projectMysqlRepo "test-va/internals/Repository/projectRepo/mysqlRepo"
 	mySqlRepo4 "test-va/internals/Repository/subscribeRepo/mySqlRepo"
 	"test-va/internals/Repository/taskRepo/mySqlRepo"
 	mySqlRepo2 "test-va/internals/Repository/userRepo/mySqlRepo"
@@ -27,6 +28,7 @@ import (
 	"test-va/internals/service/emailService"
 	log_4_go "test-va/internals/service/loggerService/log-4-go"
 	"test-va/internals/service/notificationService"
+	"test-va/internals/service/projectService"
 	"test-va/internals/service/reminderService"
 	"test-va/internals/service/socialLoginService"
 	"test-va/internals/service/subscribeService"
@@ -159,6 +161,7 @@ func Setup() {
 	defer connection.Close()
 	conn := connection.GetConn()
 
+	projectRepo := projectMysqlRepo.NewProjectSqlRepo(conn)
 	// task repo service
 	repo := mySqlRepo.NewSqlRepo(conn)
 
@@ -246,6 +249,9 @@ func Setup() {
 	//Notification Service
 	//Note Handle Unable to Connect to Firebase
 
+	//project service
+	projectSrv := projectService.NewProjectSrv(projectRepo, timeSrv, validationSrv, logger)
+
 	// task service
 	taskSrv := taskService.NewTaskSrv(repo, timeSrv, validationSrv, logger, reminderSrv, notificationSrv)
 
@@ -302,6 +308,9 @@ func Setup() {
 
 	//handle social login route
 	routes.SocialLoginRoute(v1, loginSrv)
+
+	//project routes
+	routes.ProjectRoutes(v1, projectSrv, srv)
 
 	//handle task routes
 	routes.TaskRoutes(v1, taskSrv, srv)
