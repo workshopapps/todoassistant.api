@@ -21,7 +21,7 @@ func ProjectRoutes(v1 *gin.RouterGroup, service projectService.ProjectService, s
 	project.Use(jwtMWare.ValidateJWT())
 	{
 		project.POST("", handler.CreateProject)
-
+		project.GET("/", handler.GetAllUsersProjects)
 	}
 
 

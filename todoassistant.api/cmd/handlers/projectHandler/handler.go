@@ -50,4 +50,29 @@ func (p *projectHandler) CreateProject(c *gin.Context){
 
 }
 
+func (p *projectHandler) GetAllUsersProjects(c *gin.Context){
+	userId := c.GetString("userId")
+	log.Println(userId)
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "No userId found", nil, nil))
+		return
+	}
+	projects, errRes := p.srv.GetListOfUsersProjects(userId)
+	if projects == nil{
+		message := "user with id " + userId + " has no project"
+		c.AbortWithStatusJSON(http.StatusOK,
+			ResponseEntity.BuildSuccessResponse(http.StatusNoContent, message, projects, nil))
+		return
+	}
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Failure To Find all users project", errRes, nil))
+		return
+	}
+
+	c.JSON(http.StatusOK,
+		ResponseEntity.BuildSuccessResponse(http.StatusOK, "Users projects returned successfully", projects, nil))
+}
+
 

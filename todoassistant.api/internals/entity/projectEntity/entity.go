@@ -15,3 +15,10 @@ type CreateProjectRes struct {
 	Title       	string     	`json:"title" validate:"required,min=3"`
 	Color		 	string     	`json:"color" validate:"required,min=3"`
 }
+
+type GetAllUserProjectRes struct {
+	ProjectId       string `json:"task_id"`
+	Title        	string `json:"title"`
+	Color  			string `json:"color"`
+	UserId    		string `json:"user_id"`
+}

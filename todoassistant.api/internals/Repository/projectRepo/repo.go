@@ -7,4 +7,5 @@ import (
 
 type ProjectRepository interface {
 	PersistProject(ctx context.Context, req *projectEntity.CreateProjectReq) error
+	GetListOfProjects(ctx context.Context, userId string) ([]*projectEntity.GetAllUserProjectRes, error)
 }

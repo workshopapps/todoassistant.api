@@ -16,6 +16,7 @@ import (
 
 type ProjectService interface {
 	PersistProject(req *projectEntity.CreateProjectReq)(*projectEntity.CreateProjectRes, *ResponseEntity.ServiceError)
+	GetListOfUsersProjects(userId string) ([]*projectEntity.GetAllUserProjectRes, *ResponseEntity.ServiceError)
 }
 
 type projectSrv struct {
@@ -55,4 +56,22 @@ func (p *projectSrv) PersistProject(req *projectEntity.CreateProjectReq)(*projec
 		Color: req.Color,
 	}
 	return &data,nil
+}
+
+func (p *projectSrv) GetListOfUsersProjects(userId string) ([]*projectEntity.GetAllUserProjectRes, *ResponseEntity.ServiceError){
+
+	// create context of 1 minute
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Minute*1)
+	defer cancelFunc()
+
+	projects, err := p.repo.GetListOfProjects(ctx, userId)
+	if projects == nil {
+		// log.Println("no rows returned")
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+	if err != nil {
+		log.Println(err)
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+	return projects,nil
 }
