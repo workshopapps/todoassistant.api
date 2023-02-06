@@ -45,7 +45,9 @@ func (p *projectHandler) CreateProject(c *gin.Context){
 		return
 	}
 
-	c.JSON(http.StatusOK, project)
+	c.JSON(http.StatusOK,
+		ResponseEntity.BuildSuccessResponse(http.StatusOK, "Created Project Successfully", project, nil))
+
 }
 
 
