@@ -364,3 +364,59 @@ func (m *mySql) DeleteToken(userId string) error {
 
 	return nil
 }
+
+// get user notification settings
+func (m *mySql) GetNotificationSettingsById(userId string) (*userEntity.NotificationSettingsRes, error) {
+	query := fmt.Sprintf(`
+		SELECT IF(new_comments, 'true', 'false') as new_comments,
+			IF(expired_tasks, 'true', 'false') as expired_task,
+			IF(reminder_tasks, 'true', 'false') as reminder_task,
+			IF(va_accepting_task, 'true', 'false') as va_accepting_task,
+			IF(tasks_assigned_va, 'true', 'false') as task_assigned_va,
+			IF(subscription, 'true', 'false') as subscription
+		FROM Notification_Settings
+		WHERE user_id = '%s'
+	`, userId)
+	var notificationSettings userEntity.NotificationSettingsRes
+	ctx := context.Background()
+	err := m.conn.QueryRowContext(ctx, query).Scan(
+		&notificationSettings.NewComments,
+		&notificationSettings.ExpiredTasks,
+		&notificationSettings.ReminderTasks,
+		&notificationSettings.VaAcceptingTask,
+		&notificationSettings.TaskAssingnedVa,
+		&notificationSettings.Subscribtion,
+
+	)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return &notificationSettings, nil
+}
+
+//get product email settings
+func (m *mySql) GetProductEmailSettingsById(userId string) (*userEntity.ProductEmailSettingsRes, error) {
+	query := fmt.Sprintf(`
+		SELECT IF(new_products, 'true', 'false') as new_products,
+			IF(login_alert, 'true', 'false') as login_alert,
+			IF(promotions_and_offers, 'true', 'false') as promotions_and_offers,
+			IF(tips_daily_digest, 'true', 'false') as tips_daily_digest
+		FROM Product_Email_Settings
+		WHERE user_id = '%s'
+	`, userId)
+	var productEmailSettings userEntity.ProductEmailSettingsRes
+	ctx := context.Background()
+	err := m.conn.QueryRowContext(ctx, query).Scan(
+		&productEmailSettings.NewProducts,
+		&productEmailSettings.LoginAlert,
+		&productEmailSettings.PromotionAndOffers,
+		&productEmailSettings.TipsDailyDigest,
+
+	)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return &productEmailSettings, nil
+}
