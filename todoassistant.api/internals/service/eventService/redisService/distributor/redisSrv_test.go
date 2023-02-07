@@ -1,6 +1,7 @@
 package distributor
 
 import (
+	"context"
 	"log"
 	"test-va/internals/data-store/queues"
 	"testing"
@@ -18,7 +19,7 @@ func Test_taskDistributor_SendTask(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		log.Println("sending Tasks")
-		distributor.SendTask()
+		distributor.SendTask(context.Background(), "", []byte("Hello"))
 		time.Sleep(10 * time.Second)
 	}
 }

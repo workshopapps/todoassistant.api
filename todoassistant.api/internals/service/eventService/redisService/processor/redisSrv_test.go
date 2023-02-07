@@ -15,5 +15,5 @@ func Test_taskProcessor_ProcessTask(t *testing.T) {
 	}
 	processor := NewTaskProcessor(queue.Client)
 	log.Println("recieving Tasks")
-	processor.ProcessTask(context.Background())
+	processor.ProcessTask(context.Background(), "James")
 }
