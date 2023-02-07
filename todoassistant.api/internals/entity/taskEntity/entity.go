@@ -6,19 +6,22 @@ type TaskFile struct {
 }
 
 type CreateTaskReq struct {
-	TaskId      string     `json:"task_id"`
-	UserId      string     `json:"user_id" validate:"required"`
-	Title       string     `json:"title" validate:"required,min=3"`
-	Description string     `json:"description" validate:"required,min=3"`
-	Repeat      string     `json:"repeat"`
-	Assigned    string     `json:"assigned"`
-	Files       []TaskFile `json:"files"`
-	StartTime   string     `json:"start_time" validate:"required"`
-	EndTime     string     `json:"end_time" validate:"required"`
-	VAOption    string     `json:"va_option"`
-	Status      string     `json:"status"`
-	CreatedAt   string     `json:"created_at"`
-	UpdatedAt   string     `json:"updated_at"`
+	TaskId      	string     `json:"task_id"`
+	UserId      	string     `json:"user_id" validate:"required"`
+	Title       	string     `json:"title" validate:"required,min=3"`
+	Description 	string     `json:"description"`
+	Repeat      	string     `json:"repeat"`
+	Assigned    	string     `json:"assigned"`
+	Files       	[]TaskFile `json:"files"`
+	StartTime   	string     `json:"start_time"`
+	EndTime     	string     `json:"end_time"`
+	VAOption    	string     `json:"va_option"`
+	ProjectId    	string     `json:"project_id"`
+	Notify    		bool     	`json:"notify"`
+	Status      	string     `json:"status"`
+	CreatedAt   	string     `json:"created_at"`
+	UpdatedAt   	string     `json:"updated_at"`
+	ScheduledDate   string     `json:"scheduled_date"`
 }
 
 type EditTaskReq struct {
@@ -42,14 +45,30 @@ type EditTaskRes struct {
 	Status      string `json:"status"`
 }
 
+type TaskFeatures struct{
+	IsCompleted		bool `json:"is_completed"`
+	IsExpired		bool  `json:"is_expired"`
+	IsScheduled		bool  `json:"is_scheduled"`
+	IsAssigned		bool  `json:"is_assigned"`
+}
 type CreateTaskRes struct {
-	TaskId      string `json:"task_id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	StartTime   string `json:"start_time"`
-	EndTime     string `json:"end_time"`
-	VAOption    string `json:"va_option"`
-	Repeat      string `json:"repeat"`
+	TaskId      	string `json:"task_id"`
+	Title       	string `json:"title"`
+	Description 	string `json:"description"`
+	StartTime   	string `json:"start_time"`
+	EndTime     	string `json:"end_time"`
+	VAOption    	string `json:"va_option"`
+	Repeat      	string `json:"repeat"`
+	Assigned    	string     `json:"assigned"`
+	Files       	[]TaskFile `json:"files"`
+	ProjectId    	string     `json:"project_id"`
+	Notify    		bool     	`json:"notify"`
+	Status      	string     `json:"status"`
+	CreatedAt   	string     `json:"created_at"`
+	UpdatedAt   	string     `json:"updated_at"`
+	ScheduledDate   string     `json:"scheduled_date"`
+	TaskFeatures    TaskFeatures `json:"features"`
+
 }
 
 type GetPendingTasksRes struct {

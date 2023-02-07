@@ -228,16 +228,17 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		return nil, ResponseEntity.NewValidatingError("Bad Data Input")
 	}
 
-	//check if timeDueDate and StartDate is valid
-	err = t.timeSrv.CheckFor339Format(req.EndTime)
-	if err != nil {
-		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	}
+	// //check if timeDueDate and StartDate is valid
+	// err = t.timeSrv.CheckFor339Format(req.EndTime)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
+	// }
 
-	err = t.timeSrv.CheckFor339Format(req.StartTime)
-	if err != nil {
-		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	}
+	// err = t.timeSrv.CheckFor339Format(req.StartTime)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
+	// }
+
 
 	//set time
 	req.CreatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
@@ -280,7 +281,26 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Yearly Input")
 		}
 	default:
-		return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Input(check enum data)")
+		req.Repeat="never"
+		// err = t.remindSrv.SetReminder(req)
+
+		// if err != nil {
+		// 	log.Println("From setting reminder",err)
+		// 	return nil, ResponseEntity.NewInternalServiceError(err)
+		// }
+
+	}
+
+	// find features {Look for a better way to handle this!!!}
+	var features taskEntity.TaskFeatures
+	if req.Assigned != ""{
+		features.IsAssigned = true
+	}
+	if req.ScheduledDate !=""{
+		features.IsScheduled = true
+	}
+	if req.Status == "EXPIRED"{
+		features.IsExpired = true
 	}
 
 	data := taskEntity.CreateTaskRes{
@@ -291,6 +311,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		EndTime:     req.EndTime,
 		VAOption:    req.VAOption,
 		Repeat:      req.Repeat,
+		TaskFeatures: features,
 	}
 
 	tokens, vaId, username, err := t.nSrv.GetUserVaToken(req.UserId)
