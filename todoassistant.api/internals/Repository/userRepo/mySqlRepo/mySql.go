@@ -150,7 +150,14 @@ func (m *mySql) GetById(user_id string) (*userEntity.GetByIdRes, error) {
 }
 
 func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
-	log.Println("from persist",req)
+	log.Println("from persist", req)
+	ctx := context.Background()
+	tx, err := m.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	stmt := fmt.Sprintf(` INSERT INTO Users(
                    user_id,
                    first_name,
@@ -162,15 +169,79 @@ func (m *mySql) Persist(req *userEntity.CreateUserReq) error {
                    ) VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v')`,
 		req.UserId, req.FirstName, req.LastName, req.Email, req.Phone, req.Password, req.AccountStatus)
 
-	_, err := m.conn.Exec(stmt)
+	_, err = tx.ExecContext(ctx, stmt)
 	if err != nil {
 		return err
 	}
+
+	err = m.userSettings(ctx, tx, req.UserId)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// Create function to update user in database
+// Create User Settings
+func (m *mySql) userSettings(ctx context.Context, tx *sql.Tx, userId string) error {
+	notiResult, err := m.notificationSettings(ctx, tx, userId)
+	if err != nil {
+		return err
+	}
+	log.Println("Passed notification")
 
+	nId, err := notiResult.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	prodResult, err := m.productEmailSettings(ctx, tx, userId)
+	if err != nil {
+		return err
+	}
+
+	pId, err := prodResult.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	stmt := fmt.Sprintf(`INSERT INTO User_Settings(
+		user_id,
+		notification_settings_id,
+    	product_email_settings_id
+	) VALUES('%v', '%v', '%v')`, userId, nId, pId)
+
+	_, err = tx.ExecContext(ctx, stmt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Create Notification Settings
+func (m *mySql) notificationSettings(ctx context.Context, tx *sql.Tx, userId string) (sql.Result, error) {
+	stmt := fmt.Sprintf(`INSERT INTO Notification_Settings(
+		user_id
+	) VALUES('%v')`, userId)
+
+	return tx.ExecContext(ctx, stmt)
+}
+
+// Create Product Email Settings
+func (m *mySql) productEmailSettings(ctx context.Context, tx *sql.Tx, userId string) (sql.Result, error) {
+	stmt := fmt.Sprintf(`INSERT INTO Product_Email_Settings(
+		user_id
+	) VALUES('%v')`, userId)
+
+	return tx.ExecContext(ctx, stmt)
+}
+
+// Create function to update user in database
 func (m *mySql) UpdateUser(req *userEntity.UpdateUserReq, userId string) error {
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
 	defer cancelFunc()
@@ -208,18 +279,18 @@ func (m *mySql) UpdateImage(userId, fileName string) error {
 }
 
 // Auxillary function to update user
-func updateField(tx *sql.Tx, userId string, field string, val interface{}) (sql.Result, error) {
-	return tx.Exec(fmt.Sprintf(`UPDATE Users SET %s = '%v' WHERE user_id = '%v'`, field, val, userId))
-}
+// func updateField(tx *sql.Tx, userId string, field string, val interface{}) (sql.Result, error) {
+// 	return tx.Exec(fmt.Sprintf(`UPDATE Users SET %s = '%v' WHERE user_id = '%v'`, field, val, userId))
+// }
 
-// Auxillary function to update user
-func updateFieldIfSet(tx *sql.Tx, userId string, field string, val interface{}) (sql.Result, error) {
-	v, ok := val.(string)
-	if ok && v != "" {
-		return updateField(tx, userId, field, v)
-	}
-	return nil, nil
-}
+// // Auxillary function to update user
+// func updateFieldIfSet(tx *sql.Tx, userId string, field string, val interface{}) (sql.Result, error) {
+// 	v, ok := val.(string)
+// 	if ok && v != "" {
+// 		return updateField(tx, userId, field, v)
+// 	}
+// 	return nil, nil
+// }
 
 func (m *mySql) ChangePassword(user_id, newPassword string) error {
 	query := fmt.Sprintf(`UPDATE Users SET password = '%v' WHERE user_id = '%v'`, newPassword, user_id)
@@ -292,4 +363,60 @@ func (m *mySql) DeleteToken(userId string) error {
 	}
 
 	return nil
+}
+
+// get user notification settings
+func (m *mySql) GetNotificationSettingsById(userId string) (*userEntity.NotificationSettingsRes, error) {
+	query := fmt.Sprintf(`
+		SELECT IF(new_comments, 'true', 'false') as new_comments,
+			IF(expired_tasks, 'true', 'false') as expired_task,
+			IF(reminder_tasks, 'true', 'false') as reminder_task,
+			IF(va_accepting_task, 'true', 'false') as va_accepting_task,
+			IF(tasks_assigned_va, 'true', 'false') as task_assigned_va,
+			IF(subscription, 'true', 'false') as subscription
+		FROM Notification_Settings
+		WHERE user_id = '%s'
+	`, userId)
+	var notificationSettings userEntity.NotificationSettingsRes
+	ctx := context.Background()
+	err := m.conn.QueryRowContext(ctx, query).Scan(
+		&notificationSettings.NewComments,
+		&notificationSettings.ExpiredTasks,
+		&notificationSettings.ReminderTasks,
+		&notificationSettings.VaAcceptingTask,
+		&notificationSettings.TaskAssingnedVa,
+		&notificationSettings.Subscribtion,
+
+	)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return &notificationSettings, nil
+}
+
+//get product email settings
+func (m *mySql) GetProductEmailSettingsById(userId string) (*userEntity.ProductEmailSettingsRes, error) {
+	query := fmt.Sprintf(`
+		SELECT IF(new_products, 'true', 'false') as new_products,
+			IF(login_alert, 'true', 'false') as login_alert,
+			IF(promotions_and_offers, 'true', 'false') as promotions_and_offers,
+			IF(tips_daily_digest, 'true', 'false') as tips_daily_digest
+		FROM Product_Email_Settings
+		WHERE user_id = '%s'
+	`, userId)
+	var productEmailSettings userEntity.ProductEmailSettingsRes
+	ctx := context.Background()
+	err := m.conn.QueryRowContext(ctx, query).Scan(
+		&productEmailSettings.NewProducts,
+		&productEmailSettings.LoginAlert,
+		&productEmailSettings.PromotionAndOffers,
+		&productEmailSettings.TipsDailyDigest,
+
+	)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return &productEmailSettings, nil
 }

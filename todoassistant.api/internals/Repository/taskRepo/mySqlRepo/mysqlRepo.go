@@ -269,6 +269,7 @@ func (s *sqlRepo) Persist(ctx context.Context, req *taskEntity.CreateTaskReq) er
 			tx.Commit()
 		}
 	}()
+	log.Println("create task req",req)
 
 	stmt := fmt.Sprintf(`INSERT
 		INTO Tasks(
@@ -280,10 +281,13 @@ func (s *sqlRepo) Persist(ctx context.Context, req *taskEntity.CreateTaskReq) er
                   end_time,
                   created_at,
                   va_option,
-                  repeat_frequency
+                  repeat_frequency,
+				  notify,
+				  project_id,
+				  scheduled_date
 				   )
-		VALUES ('%v','%v','%v','%v','%v','%v','%v', '%v', '%v')`, req.TaskId, req.UserId, req.Title, req.Description,
-		req.StartTime, req.EndTime, req.CreatedAt, req.VAOption, req.Repeat)
+		VALUES ('%v','%v','%v','%v','%v','%v','%v', '%v', '%v',%t, '%v', '%v')`, req.TaskId, req.UserId, req.Title, req.Description,
+		req.StartTime, req.EndTime, req.CreatedAt, req.VAOption, req.Repeat, req.Notify, req.ProjectId, req.ScheduledDate)
 
 	_, err = tx.ExecContext(ctx, stmt)
 	if err != nil {

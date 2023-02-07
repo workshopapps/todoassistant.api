@@ -45,8 +45,8 @@ func (t *taskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, task)
 
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Task created successfully", task, nil))
 }
 
 func (t *taskHandler) GetPendingTasks(c *gin.Context) {

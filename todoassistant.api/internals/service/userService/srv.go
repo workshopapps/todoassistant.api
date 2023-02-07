@@ -80,6 +80,12 @@ func (u *userSrv) Login(req *userEntity.LoginReq) (*userEntity.LoginRes, *Respon
 	if errToken != nil {
 		return nil, ResponseEntity.NewInternalServiceError("Cannot create access token!")
 	}
+	notificationSettings, _ := u.repo.GetNotificationSettingsById(user.UserId)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewInternalServiceError("unable to get notification settings")
+	// }
+	productEmailSettings, _ := u.repo.GetProductEmailSettingsById(user.UserId)
+	log.Println(notificationSettings)
 
 	loggedInUser := userEntity.LoginRes{
 		UserId:       user.UserId,
@@ -89,6 +95,8 @@ func (u *userSrv) Login(req *userEntity.LoginReq) (*userEntity.LoginRes, *Respon
 		Phone:        user.Phone,
 		Gender:       user.Gender,
 		Avatar:       user.Avatar,
+		NotificationSettings: *notificationSettings,
+		ProductEmailSettings: *productEmailSettings,
 		Token:        token,
 		RefreshToken: refreshToken,
 	}
@@ -287,7 +295,7 @@ func (u *userSrv) ChangePassword(req *userEntity.ChangePasswordReq) *ResponseEnt
 
 	// send email to user
 	subject := fmt.Sprintf("Hi %v %v, \n\n", user.FirstName, user.LastName)
-	mainBody := subject+"your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
+	mainBody := subject + "your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
 
 	payload := eventEntity.Payload{
 		Action:    "email",
@@ -510,9 +518,9 @@ func (u *userSrv) ResetPasswordWithToken(req *userEntity.ResetPasswordWithTokenR
 	if err != nil {
 		return ResponseEntity.NewInternalServiceError("Could not change password!")
 	}
-		// send email to user
+	// send email to user
 	subject := fmt.Sprintf("Hi %v %v, \n\n", user.FirstName, user.LastName)
-	mainBody := subject+"your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
+	mainBody := subject + "your password has been changed successfully.\nBut if this action was not requested by you.\nPlease inform us.\nthank you. "
 
 	payload := eventEntity.Payload{
 		Action:    "email",
