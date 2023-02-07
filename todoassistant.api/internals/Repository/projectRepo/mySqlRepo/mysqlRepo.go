@@ -1,4 +1,4 @@
-package mysqlRepo
+package mySqlRepo
 
 import (
 	"context"
