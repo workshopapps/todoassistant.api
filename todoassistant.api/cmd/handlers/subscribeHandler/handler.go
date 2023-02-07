@@ -35,7 +35,7 @@ func (t *subscribeHandler) AddSubscriber(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "error adding email to list", errRes, nil))
 		return
 	}
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "User added to list", response, nil))
 }
 
 func (t *subscribeHandler) DeleteSubscriber(c *gin.Context) {
@@ -56,7 +56,7 @@ func (t *subscribeHandler) DeleteSubscriber(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Error removing subscriber from list", errRes, nil))
 		return
 	}
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "User removed from list", response, nil))
 }
 
 func (t *subscribeHandler) ContactUs(c *gin.Context) {
@@ -76,5 +76,5 @@ func (t *subscribeHandler) ContactUs(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Error sending email", errRes, nil))
 		return
 	}
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Message received", response, nil))
 }
