@@ -14,6 +14,7 @@ func SubscribeRoutes(v1 *gin.RouterGroup, service subscribeService.SubscribeServ
 	subscribe := v1.Group("/subscribe")
 	{
 		subscribe.POST("", handler.AddSubscriber)
+		subscribe.DELETE("", handler.DeleteSubscriber)
 	}
 	contact := v1.Group("/contact-us")
 	{

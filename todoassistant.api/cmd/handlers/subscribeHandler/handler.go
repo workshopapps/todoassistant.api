@@ -38,6 +38,27 @@ func (t *subscribeHandler) AddSubscriber(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func (t *subscribeHandler) DeleteSubscriber(c *gin.Context) {
+	// create a request of subscribeEntity type
+	var req subscribeEntity.SubscribeReq
+
+	// copy data from gin context to req
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "email field required", err, nil))
+		return
+	}
+	// call function from service that saves email to DB
+	response, errRes := t.srv.DeleteSubscriber(&req)
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Error removing subscriber from list", errRes, nil))
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 func (t *subscribeHandler) ContactUs(c *gin.Context) {
 	var req subscribeEntity.ContactUsReq
 

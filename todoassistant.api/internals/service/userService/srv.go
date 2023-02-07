@@ -88,17 +88,17 @@ func (u *userSrv) Login(req *userEntity.LoginReq) (*userEntity.LoginRes, *Respon
 	log.Println(notificationSettings)
 
 	loggedInUser := userEntity.LoginRes{
-		UserId:       user.UserId,
-		Email:        user.Email,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		Phone:        user.Phone,
-		Gender:       user.Gender,
-		Avatar:       user.Avatar,
+		UserId:               user.UserId,
+		Email:                user.Email,
+		FirstName:            user.FirstName,
+		LastName:             user.LastName,
+		Phone:                user.Phone,
+		Gender:               user.Gender,
+		Avatar:               user.Avatar,
 		NotificationSettings: *notificationSettings,
 		ProductEmailSettings: *productEmailSettings,
-		Token:        token,
-		RefreshToken: refreshToken,
+		Token:                token,
+		RefreshToken:         refreshToken,
 	}
 	return &loggedInUser, nil
 }

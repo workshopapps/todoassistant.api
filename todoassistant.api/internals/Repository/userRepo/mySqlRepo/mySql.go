@@ -386,7 +386,6 @@ func (m *mySql) GetNotificationSettingsById(userId string) (*userEntity.Notifica
 		&notificationSettings.VaAcceptingTask,
 		&notificationSettings.TaskAssingnedVa,
 		&notificationSettings.Subscribtion,
-
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -395,7 +394,7 @@ func (m *mySql) GetNotificationSettingsById(userId string) (*userEntity.Notifica
 	return &notificationSettings, nil
 }
 
-//get product email settings
+// get product email settings
 func (m *mySql) GetProductEmailSettingsById(userId string) (*userEntity.ProductEmailSettingsRes, error) {
 	query := fmt.Sprintf(`
 		SELECT IF(new_products, 'true', 'false') as new_products,
@@ -412,7 +411,6 @@ func (m *mySql) GetProductEmailSettingsById(userId string) (*userEntity.ProductE
 		&productEmailSettings.LoginAlert,
 		&productEmailSettings.PromotionAndOffers,
 		&productEmailSettings.TipsDailyDigest,
-
 	)
 	if err != nil {
 		fmt.Println(err)
