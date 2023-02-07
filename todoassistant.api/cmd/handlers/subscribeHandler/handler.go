@@ -35,7 +35,28 @@ func (t *subscribeHandler) AddSubscriber(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "error adding email to list", errRes, nil))
 		return
 	}
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "User added to list", response, nil))
+}
+
+func (t *subscribeHandler) DeleteSubscriber(c *gin.Context) {
+	// create a request of subscribeEntity type
+	var req subscribeEntity.SubscribeReq
+
+	// copy data from gin context to req
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "email field required", err, nil))
+		return
+	}
+	// call function from service that saves email to DB
+	response, errRes := t.srv.DeleteSubscriber(&req)
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Error removing subscriber from list", errRes, nil))
+		return
+	}
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "User removed from list", response, nil))
 }
 
 func (t *subscribeHandler) ContactUs(c *gin.Context) {
@@ -55,5 +76,5 @@ func (t *subscribeHandler) ContactUs(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Error sending email", errRes, nil))
 		return
 	}
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Message received", response, nil))
 }
