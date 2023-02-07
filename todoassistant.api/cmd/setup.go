@@ -13,7 +13,7 @@ import (
 	"test-va/cmd/routes"
 	mySqlCallRepo "test-va/internals/Repository/callRepo/mySqlRepo"
 	mySqlNotifRepo "test-va/internals/Repository/notificationRepo/mysqlRepo"
-	projectMysqlRepo "test-va/internals/Repository/projectRepo/mysqlRepo"
+	projectMysqlRepo "test-va/internals/Repository/projectRepo/mySqlRepo"
 	mySqlRepo4 "test-va/internals/Repository/subscribeRepo/mySqlRepo"
 	"test-va/internals/Repository/taskRepo/mySqlRepo"
 	mySqlRepo2 "test-va/internals/Repository/userRepo/mySqlRepo"
