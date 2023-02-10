@@ -169,8 +169,9 @@ func (t *taskHandler) GetAllTask(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Failure To Find all task", errRes, nil))
 		return
 	}
-	c.JSON(http.StatusOK, task)
+	message := "successfully fetched all user Tasks "
 
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, message, task, nil))
 }
 
 // Handle Delete task by id
