@@ -45,7 +45,6 @@ func (t *taskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-
 	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Task created successfully", task, nil))
 }
 
@@ -160,7 +159,7 @@ func (t *taskHandler) GetAllTask(c *gin.Context) {
 
 	task, errRes := t.srv.GetAllTask(userId)
 	if task == nil {
-		message := "no Task with id " + userId + " exists"
+		message := "no task for user " + userId + " exists"
 		c.AbortWithStatusJSON(http.StatusOK,
 			ResponseEntity.BuildSuccessResponse(http.StatusNoContent, message, task, nil))
 		return
