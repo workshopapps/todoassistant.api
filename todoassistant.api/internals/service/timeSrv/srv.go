@@ -6,6 +6,7 @@ type TimeService interface {
 	CurrentTime() time.Time
 	TimeSince(time2 time.Time) time.Duration
 	CheckFor339Format(time string) error
+	CalcEndTime() time.Time
 }
 
 type timeStruct struct{}
@@ -30,4 +31,10 @@ func (t timeStruct) CurrentTime() time.Time {
 
 func (t timeStruct) TimeSince(time2 time.Time) time.Duration {
 	return time.Since(time2)
+}
+
+func (t timeStruct) CalcEndTime() time.Time{
+	now := time.Now()
+	endOfDay := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
+	return endOfDay
 }
