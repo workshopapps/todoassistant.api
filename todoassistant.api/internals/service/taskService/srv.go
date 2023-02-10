@@ -688,14 +688,26 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 		log.Println(err)
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
+	req.UpdatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
 	log.Println(req)
-	//Update Task
-	//err = t.repo.EditTaskById(ctx, taskId, req)
 
-	// if err != nil {
-	// 	log.Println(err, "error creating data")
-	// 	return nil, ResponseEntity.NewInternalServiceError(err)
-	// }
+	//check if timeDueDate and StartDate is valid
+	err = t.timeSrv.CheckFor339Format(req.EndTime)
+	if err != nil {
+		return nil, ResponseEntity.NewCustomServiceError("Bad End Time Input", err)
+	}
+
+	err = t.timeSrv.CheckFor339Format(req.StartTime)
+	if err != nil {
+		return nil, ResponseEntity.NewCustomServiceError("Bad Start Time Input", err)
+	}
+	//Update Task
+	err = t.repo.EditTaskById(ctx, taskId, req)
+
+	if err != nil {
+		log.Println(err, "error creating data")
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
 
 	//Returning Data
 	data := taskEntity.EditTaskRes{
@@ -704,89 +716,88 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 		Repeat:      req.Repeat,
 		StartTime:   req.StartTime,
 		EndTime:     req.EndTime,
-		VAOption:    req.VAOption,
 		Status:      req.Status,
 	}
-	updateAt := t.timeSrv.CurrentTime().Format(time.RFC3339)
-	ndate := &taskEntity.CreateTaskReq{
-		TaskId:      taskId,
-		UserId:      task.UserId,
-		Title:       data.Title,
-		Description: data.Description,
-		Repeat:      data.Repeat,
-		StartTime:   data.StartTime,
-		EndTime:     data.EndTime,
-		VAOption:    data.VAOption,
-		Status:      data.Status,
-		UpdatedAt:   updateAt,
-		CreatedAt:   task.CreatedAt,
-	}
+	// updateAt := t.timeSrv.CurrentTime().Format(time.RFC3339)
+	// ndate := &taskEntity.CreateTaskReq{
+	// 	TaskId:      taskId,
+	// 	UserId:      task.UserId,
+	// 	Title:       data.Title,
+	// 	Description: data.Description,
+	// 	Repeat:      data.Repeat,
+	// 	StartTime:   data.StartTime,
+	// 	EndTime:     data.EndTime,
+	// 	VAOption:    data.VAOption,
+	// 	Status:      data.Status,
+	// 	UpdatedAt:   updateAt,
+	// 	CreatedAt:   task.CreatedAt,
+	// }
 
-	// delete former task
-	_, err2 := t.DeleteTaskByID(taskId)
-	if err2 != nil {
-		log.Println(err2)
-		return nil, err2
-	}
-	log.Println("Deleted task line 381")
+	// // delete former task
+	// _, err2 := t.DeleteTaskByID(taskId)
+	// if err2 != nil {
+	// 	log.Println(err2)
+	// 	return nil, err2
+	// }
+	// log.Println("Deleted task line 381")
 
 	// create new task
 
-	//check if timeDueDate and StartDate is valid
-	err = t.timeSrv.CheckFor339Format(ndate.EndTime)
-	if err != nil {
-		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	}
+	// //check if timeDueDate and StartDate is valid
+	// err = t.timeSrv.CheckFor339Format(ndate.EndTime)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
+	// }
 
-	err = t.timeSrv.CheckFor339Format(ndate.StartTime)
-	if err != nil {
-		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	}
+	// err = t.timeSrv.CheckFor339Format(ndate.StartTime)
+	// if err != nil {
+	// 	return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
+	// }
 
 	// create a reminder
-	switch req.Repeat {
-	case "never":
-		err = t.remindSrv.SetReminder(ndate)
+	// switch req.Repeat {
+	// case "never":
+	// 	err = t.remindSrv.SetReminder(ndate)
 
-		if err != nil {
-			log.Println(err)
-			return nil, ResponseEntity.NewInternalServiceError(err)
-		}
-	case "daily":
-		err = t.remindSrv.SetDailyReminder(ndate)
-		if err != nil {
-			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Daily Input")
-		}
-	case "weekly":
-		err = t.remindSrv.SetWeeklyReminder(ndate)
-		if err != nil {
-			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Weekly Input")
-		}
-	case "bi-weekly":
-		err = t.remindSrv.SetBiWeeklyReminder(ndate)
-		if err != nil {
-			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Bi Weekly Input")
-		}
-	case "monthly":
-		err = t.remindSrv.SetMonthlyReminder(ndate)
-		if err != nil {
-			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Monthly Input")
-		}
-	case "yearly":
-		err = t.remindSrv.SetYearlyReminder(ndate)
-		if err != nil {
-			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Yearly Input")
-		}
-	default:
-		return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Input(check enum data)")
-	}
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		return nil, ResponseEntity.NewInternalServiceError(err)
+	// 	}
+	// case "daily":
+	// 	err = t.remindSrv.SetDailyReminder(ndate)
+	// 	if err != nil {
+	// 		return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Daily Input")
+	// 	}
+	// case "weekly":
+	// 	err = t.remindSrv.SetWeeklyReminder(ndate)
+	// 	if err != nil {
+	// 		return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Weekly Input")
+	// 	}
+	// case "bi-weekly":
+	// 	err = t.remindSrv.SetBiWeeklyReminder(ndate)
+	// 	if err != nil {
+	// 		return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Bi Weekly Input")
+	// 	}
+	// case "monthly":
+	// 	err = t.remindSrv.SetMonthlyReminder(ndate)
+	// 	if err != nil {
+	// 		return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Monthly Input")
+	// 	}
+	// case "yearly":
+	// 	err = t.remindSrv.SetYearlyReminder(ndate)
+	// 	if err != nil {
+	// 		return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Yearly Input")
+	// 	}
+	// default:
+	// 	return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Input(check enum data)")
+	// }
 
 	// insert into db
-	err = t.repo.Persist(ctx, ndate)
-	if err != nil {
-		log.Println(err)
-		return nil, ResponseEntity.NewInternalServiceError(err)
-	}
+	// err = t.repo.Persist(ctx, ndate)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return nil, ResponseEntity.NewInternalServiceError(err)
+	// }
 	log.Println("update complete")
 
 	return &data, nil
