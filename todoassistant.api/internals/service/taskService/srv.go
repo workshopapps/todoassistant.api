@@ -228,24 +228,31 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		return nil, ResponseEntity.NewValidatingError("Bad Data Input")
 	}
 
-	// //check if timeDueDate and StartDate is valid
-	// err = t.timeSrv.CheckFor339Format(req.EndTime)
-	// if err != nil {
-	// 	return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	// }
-
-	// err = t.timeSrv.CheckFor339Format(req.StartTime)
-	// if err != nil {
-	// 	return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	// }
-
-
 	//set time
 	req.CreatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
 	//set id
 	req.TaskId = uuid.New().String()
 	req.Status = "PENDING"
 
+	//set start time and endtime
+	if req.StartTime == "" {
+		req.StartTime = t.timeSrv.CurrentTime().Format(time.RFC3339)
+	}
+
+	if req.EndTime == "" {
+		req.EndTime = t.timeSrv.CalcEndTime().Format(time.RFC3339)
+	}
+
+	//check if timeDueDate and StartDate is valid
+	err = t.timeSrv.CheckFor339Format(req.EndTime)
+	if err != nil {
+		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
+	}
+
+	err = t.timeSrv.CheckFor339Format(req.StartTime)
+	if err != nil {
+		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
+	}
 	// create a reminder
 	switch req.Repeat {
 	case "never":
@@ -281,7 +288,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Yearly Input")
 		}
 	default:
-		req.Repeat="never"
+		req.Repeat = "never"
 		// err = t.remindSrv.SetReminder(req)
 
 		// if err != nil {
@@ -293,25 +300,27 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 
 	// find features {Look for a better way to handle this!!!}
 	var features taskEntity.TaskFeatures
-	if req.Assigned != ""{
+	if req.Assigned != "" {
 		features.IsAssigned = true
 	}
-	if req.ScheduledDate !=""{
+	if req.ScheduledDate != "" {
 		features.IsScheduled = true
 	}
-	if req.Status == "EXPIRED"{
+	if req.Status == "EXPIRED" {
 		features.IsExpired = true
 	}
 
 	data := taskEntity.CreateTaskRes{
-		TaskId:      req.TaskId,
-		Title:       req.Title,
-		Description: req.Description,
-		StartTime:   req.StartTime,
-		EndTime:     req.EndTime,
-		VAOption:    req.VAOption,
-		Repeat:      req.Repeat,
+		TaskId:       req.TaskId,
+		Title:        req.Title,
+		Description:  req.Description,
+		StartTime:    req.StartTime,
+		EndTime:      req.EndTime,
+		VAOption:     req.VAOption,
+		Repeat:       req.Repeat,
 		TaskFeatures: features,
+		CreatedAt:    req.CreatedAt,
+		ProjectId:    req.ProjectId,
 	}
 
 	tokens, vaId, username, err := t.nSrv.GetUserVaToken(req.UserId)

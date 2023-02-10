@@ -269,7 +269,7 @@ func (s *sqlRepo) Persist(ctx context.Context, req *taskEntity.CreateTaskReq) er
 			tx.Commit()
 		}
 	}()
-	log.Println("create task req",req)
+	log.Println("create task req", req)
 
 	stmt := fmt.Sprintf(`INSERT
 		INTO Tasks(
@@ -510,10 +510,10 @@ func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity
 	if err != nil {
 		return nil, err
 	}
-
+	log.Println("HERE ", userId)
 	stmt := fmt.Sprintf(`
-		SELECT task_id, title, description, repeat_frequency, va_option, COALESCE(va_id, ''), status, start_time, end_time, comment_count
-		FROM Tasks T WHERE user_id = '%s'`, userId)
+		SELECT task_id, title, description, status, start_time, repeat_frequency, end_time, created_at, COALESCE(updated_at, ""), COALESCE(va_id,""), notify, COALESCE(project_id,""), COALESCE(scheduled_date,"")
+		FROM Tasks T WHERE user_id= '%s'`, userId)
 
 	rows, err := db.QueryContext(ctx, stmt)
 	if err != nil {
@@ -530,17 +530,32 @@ func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity
 			&singleTask.TaskId,
 			&singleTask.Title,
 			&singleTask.Description,
-			&singleTask.Repeat,
-			&singleTask.VAOption,
-			&singleTask.VaId,
 			&singleTask.Status,
 			&singleTask.StartTime,
+			&singleTask.Repeat,
 			&singleTask.EndTime,
-			&singleTask.CommentCount,
+			&singleTask.CreatedAt,
+			&singleTask.UpdatedAt,
+			&singleTask.VaId,
+			&singleTask.Notify,
+			&singleTask.ProjectId,
+			&singleTask.ScheduledDate,
 		)
 		if err != nil {
+			log.Println("error ", err)
 			return nil, err
 		}
+		var features taskEntity.TaskFeatures
+		if singleTask.VaId != "" {
+			features.IsAssigned = true
+		}
+		if singleTask.ScheduledDate != "" {
+			features.IsScheduled = true
+		}
+		if singleTask.Status == "EXPIRED" {
+			features.IsExpired = true
+		}
+		singleTask.TaskFeatures = features
 		AllTasks = append(AllTasks, &singleTask)
 	}
 	return AllTasks, nil
