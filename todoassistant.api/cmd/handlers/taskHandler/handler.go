@@ -268,6 +268,7 @@ func (t *taskHandler) EditTaskById(c *gin.Context) {
 	//log.Println(taskId)
 	err := c.ShouldBind(&req)
 	if err != nil {
+		log.Println(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest,
 			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Input Request", err, nil))
 		return

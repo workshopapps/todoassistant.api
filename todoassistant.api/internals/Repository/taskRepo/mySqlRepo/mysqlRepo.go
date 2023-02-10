@@ -612,16 +612,23 @@ func (s *sqlRepo) DeleteAllTask(ctx context.Context, userId string) error {
 }
 
 func (s *sqlRepo) EditTaskById(ctx context.Context, taskId string, req *taskEntity.EditTaskReq) error {
-
+	notifyInt := 0
+	if req.Notify {
+		notifyInt = 1
+	}
 	_, err := s.conn.ExecContext(ctx, fmt.Sprintf(`UPDATE Tasks SET
                  title = '%s',
                  description = '%s',
+				 status = '%s',
+				 start_time = '%s',
+				 repeat_frequency = '%s',
                  end_time = '%s',
                  updated_at = '%s',
-                 va_option ='%s',
-                 repeat_frequency= '%s'
+                 notify = '%d',
+				 project_id =' %s',
+                 scheduled_date= '%s'
              WHERE task_id = '%s'
-            `, req.Title, req.Description, req.EndTime, req.UpdatedAt, req.VAOption, req.Repeat, taskId))
+            `, req.Title, req.Description, req.Status, req.StartTime, req.Repeat, req.EndTime, req.UpdatedAt, notifyInt, req.ProjectId, req.ScheduledDate, taskId))
 	if err != nil {
 		log.Fatal(err)
 	}
