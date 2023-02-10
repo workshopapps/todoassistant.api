@@ -48,7 +48,7 @@ func (u *userHandler) Login(c *gin.Context) {
 			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Request", err, nil))
 		return
 	}
-
+	log.Println("Before calling user service ", req)
 	user, errorRes := u.srv.Login(&req)
 	if errorRes != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized,
