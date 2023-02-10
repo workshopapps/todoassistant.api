@@ -228,23 +228,32 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		return nil, ResponseEntity.NewValidatingError("Bad Data Input")
 	}
 
-	// //check if timeDueDate and StartDate is valid
-	// err = t.timeSrv.CheckFor339Format(req.EndTime)
-	// if err != nil {
-	// 	return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	// }
-
-	// err = t.timeSrv.CheckFor339Format(req.StartTime)
-	// if err != nil {
-	// 	return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	// }
-
-
 	//set time
 	req.CreatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
 	//set id
 	req.TaskId = uuid.New().String()
 	req.Status = "PENDING"
+
+	//set start time and endtime
+	if req.StartTime == ""{
+		req.StartTime=t.timeSrv.CurrentTime().Format(time.RFC3339);
+	}
+
+	if req.EndTime == ""{
+		req.EndTime = t.timeSrv.CalcEndTime().Format(time.RFC3339)
+	}
+
+
+	//check if timeDueDate and StartDate is valid
+	err = t.timeSrv.CheckFor339Format(req.EndTime)
+	if err != nil {
+		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
+	}
+
+	err = t.timeSrv.CheckFor339Format(req.StartTime)
+	if err != nil {
+		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
+	}
 
 	// create a reminder
 	switch req.Repeat {
