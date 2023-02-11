@@ -1020,6 +1020,56 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "description": "Add a subscriber route",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subscribe"
+                ],
+                "summary": "Provide email to be subscribed to our service",
+                "parameters": [
+                    {
+                        "description": "Subscribe request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/subscribeEntity.SubscribeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/subscribeEntity.SubscribeRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseEntity.ServiceError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseEntity.ServiceError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseEntity.ServiceError"
+                        }
+                    }
+                }
             }
         },
         "/task": {
@@ -2608,9 +2658,6 @@ const docTemplate = `{
         "taskEntity.CreateTaskReq": {
             "type": "object",
             "required": [
-                "description",
-                "end_time",
-                "start_time",
                 "title",
                 "user_id"
             ],
@@ -2622,8 +2669,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
-                    "type": "string",
-                    "minLength": 3
+                    "type": "string"
                 },
                 "end_time": {
                     "type": "string"
@@ -2634,7 +2680,16 @@ const docTemplate = `{
                         "$ref": "#/definitions/taskEntity.TaskFile"
                     }
                 },
+                "notify": {
+                    "type": "boolean"
+                },
+                "project_id": {
+                    "type": "string"
+                },
                 "repeat": {
+                    "type": "string"
+                },
+                "scheduled_date": {
                     "type": "string"
                 },
                 "start_time": {
@@ -2664,22 +2719,52 @@ const docTemplate = `{
         "taskEntity.CreateTaskRes": {
             "type": "object",
             "properties": {
+                "assigned": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
                 "end_time": {
                     "type": "string"
                 },
+                "features": {
+                    "$ref": "#/definitions/taskEntity.TaskFeatures"
+                },
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/taskEntity.TaskFile"
+                    }
+                },
+                "notify": {
+                    "type": "boolean"
+                },
+                "project_id": {
+                    "type": "string"
+                },
                 "repeat": {
                     "type": "string"
                 },
+                "scheduled_date": {
+                    "type": "string"
+                },
                 "start_time": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 },
                 "task_id": {
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 },
                 "va_option": {
@@ -2725,8 +2810,11 @@ const docTemplate = `{
         "taskEntity.GetAllTaskRes": {
             "type": "object",
             "properties": {
-                "comment_count": {
-                    "type": "integer"
+                "assigned": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
                 },
                 "description": {
                     "type": "string"
@@ -2734,7 +2822,25 @@ const docTemplate = `{
                 "end_time": {
                     "type": "string"
                 },
+                "features": {
+                    "$ref": "#/definitions/taskEntity.TaskFeatures"
+                },
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/taskEntity.TaskFile"
+                    }
+                },
+                "notify": {
+                    "type": "boolean"
+                },
+                "project_id": {
+                    "type": "string"
+                },
                 "repeat": {
+                    "type": "string"
+                },
+                "scheduled_date": {
                     "type": "string"
                 },
                 "start_time": {
@@ -2747,6 +2853,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 },
                 "va_id": {
@@ -2864,6 +2973,23 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "taskEntity.TaskFeatures": {
+            "type": "object",
+            "properties": {
+                "is_assigned": {
+                    "type": "boolean"
+                },
+                "is_completed": {
+                    "type": "boolean"
+                },
+                "is_expired": {
+                    "type": "boolean"
+                },
+                "is_scheduled": {
+                    "type": "boolean"
                 }
             }
         },
@@ -3081,14 +3207,60 @@ const docTemplate = `{
                 "last_name": {
                     "type": "string"
                 },
+                "notification_settings": {
+                    "$ref": "#/definitions/userEntity.NotificationSettingsRes"
+                },
                 "phone": {
                     "type": "string"
+                },
+                "product_email_settings": {
+                    "$ref": "#/definitions/userEntity.ProductEmailSettingsRes"
                 },
                 "refresh_token": {
                     "type": "string"
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "userEntity.NotificationSettingsRes": {
+            "type": "object",
+            "properties": {
+                "expired_tasks": {
+                    "type": "boolean"
+                },
+                "new_comment": {
+                    "type": "boolean"
+                },
+                "reminder_tasks": {
+                    "type": "boolean"
+                },
+                "subscription": {
+                    "type": "boolean"
+                },
+                "task_assigned": {
+                    "type": "boolean"
+                },
+                "va_accepting_task": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "userEntity.ProductEmailSettingsRes": {
+            "type": "object",
+            "properties": {
+                "logn_alert": {
+                    "type": "boolean"
+                },
+                "new_product": {
+                    "type": "boolean"
+                },
+                "promotions_and_offers": {
+                    "type": "boolean"
+                },
+                "tips_daily_digest": {
+                    "type": "boolean"
                 }
             }
         },
@@ -3470,7 +3642,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "2.0",
-	Host:             "https://api.ticked.hng.tech:2022",
+	Host:             "api.ticked.hng.tech:2022",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Ticked",
