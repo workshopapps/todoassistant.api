@@ -2346,6 +2346,9 @@ paths:
       summary: Register a virtual assistant
       tags:
       - VA
+schemes:
+- http
+- https
 securityDefinitions:
   ApiKeyAuth:
     in: header
