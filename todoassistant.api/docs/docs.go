@@ -3644,7 +3644,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "2.0",
 	Host:             "api.ticked.hng.tech:2022",
 	BasePath:         "/api/v1",
-	Schemes:          []string{},
+	Schemes:          []string{"http", "https"},
 	Title:            "Ticked",
 	Description:      "A web application that helps you to keep your day planned",
 	InfoInstanceName: "swagger",
