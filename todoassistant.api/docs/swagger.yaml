@@ -141,7 +141,6 @@ definitions:
       created_at:
         type: string
       description:
-        minLength: 3
         type: string
       end_time:
         type: string
@@ -149,7 +148,13 @@ definitions:
         items:
           $ref: '#/definitions/taskEntity.TaskFile'
         type: array
+      notify:
+        type: boolean
+      project_id:
+        type: string
       repeat:
+        type: string
+      scheduled_date:
         type: string
       start_time:
         type: string
@@ -167,25 +172,42 @@ definitions:
       va_option:
         type: string
     required:
-    - description
-    - end_time
-    - start_time
     - title
     - user_id
     type: object
   taskEntity.CreateTaskRes:
     properties:
+      assigned:
+        type: string
+      created_at:
+        type: string
       description:
         type: string
       end_time:
         type: string
+      features:
+        $ref: '#/definitions/taskEntity.TaskFeatures'
+      files:
+        items:
+          $ref: '#/definitions/taskEntity.TaskFile'
+        type: array
+      notify:
+        type: boolean
+      project_id:
+        type: string
       repeat:
         type: string
+      scheduled_date:
+        type: string
       start_time:
+        type: string
+      status:
         type: string
       task_id:
         type: string
       title:
+        type: string
+      updated_at:
         type: string
       va_option:
         type: string
@@ -215,13 +237,27 @@ definitions:
     type: object
   taskEntity.GetAllTaskRes:
     properties:
-      comment_count:
-        type: integer
+      assigned:
+        type: string
+      created_at:
+        type: string
       description:
         type: string
       end_time:
         type: string
+      features:
+        $ref: '#/definitions/taskEntity.TaskFeatures'
+      files:
+        items:
+          $ref: '#/definitions/taskEntity.TaskFile'
+        type: array
+      notify:
+        type: boolean
+      project_id:
+        type: string
       repeat:
+        type: string
+      scheduled_date:
         type: string
       start_time:
         type: string
@@ -230,6 +266,8 @@ definitions:
       task_id:
         type: string
       title:
+        type: string
+      updated_at:
         type: string
       va_id:
         type: string
@@ -307,6 +345,17 @@ definitions:
         type: string
       user_id:
         type: string
+    type: object
+  taskEntity.TaskFeatures:
+    properties:
+      is_assigned:
+        type: boolean
+      is_completed:
+        type: boolean
+      is_expired:
+        type: boolean
+      is_scheduled:
+        type: boolean
     type: object
   taskEntity.TaskFile:
     properties:
@@ -450,12 +499,42 @@ definitions:
         type: string
       last_name:
         type: string
+      notification_settings:
+        $ref: '#/definitions/userEntity.NotificationSettingsRes'
       phone:
         type: string
+      product_email_settings:
+        $ref: '#/definitions/userEntity.ProductEmailSettingsRes'
       refresh_token:
         type: string
       user_id:
         type: string
+    type: object
+  userEntity.NotificationSettingsRes:
+    properties:
+      expired_tasks:
+        type: boolean
+      new_comment:
+        type: boolean
+      reminder_tasks:
+        type: boolean
+      subscription:
+        type: boolean
+      task_assigned:
+        type: boolean
+      va_accepting_task:
+        type: boolean
+    type: object
+  userEntity.ProductEmailSettingsRes:
+    properties:
+      logn_alert:
+        type: boolean
+      new_product:
+        type: boolean
+      promotions_and_offers:
+        type: boolean
+      tips_daily_digest:
+        type: boolean
     type: object
   userEntity.ProfileImageRes:
     properties:
@@ -695,7 +774,7 @@ definitions:
       user_id:
         type: string
     type: object
-host: https://api.ticked.hng.tech:2022
+host: api.ticked.hng.tech:2022
 info:
   contact:
     email: support@swagger.io
@@ -1316,6 +1395,39 @@ paths:
       tags:
       - Users
   /subscribe:
+    delete:
+      consumes:
+      - application/json
+      description: Add a subscriber route
+      parameters:
+      - description: Subscribe request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/subscribeEntity.SubscribeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/subscribeEntity.SubscribeRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ResponseEntity.ServiceError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ResponseEntity.ServiceError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ResponseEntity.ServiceError'
+      summary: Provide email to be subscribed to our service
+      tags:
+      - Subscribe
     post:
       consumes:
       - application/json
@@ -2234,6 +2346,9 @@ paths:
       summary: Register a virtual assistant
       tags:
       - VA
+schemes:
+- http
+- https
 securityDefinitions:
   ApiKeyAuth:
     in: header

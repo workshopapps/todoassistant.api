@@ -19,7 +19,8 @@ func main() {
 	// @license.name  Apache 2.0
 	// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-	// @host      https://api.ticked.hng.tech:2022
+	// @host      api.ticked.hng.tech:2022
+	// @schemes http https
 	// @BasePath  /api/v1
 
 	// @securityDefinitions.apiKey  ApiKeyAuth
