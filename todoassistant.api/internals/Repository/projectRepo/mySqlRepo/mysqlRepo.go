@@ -10,14 +10,14 @@ import (
 	"test-va/internals/entity/projectEntity"
 )
 
-type sqlRepo struct{
+type sqlRepo struct {
 	conn *sql.DB
 }
 
-func (s *sqlRepo) PersistProject(ctx context.Context, req *projectEntity.CreateProjectReq)error{
+func (s *sqlRepo) PersistProject(ctx context.Context, req *projectEntity.CreateProjectReq) error {
 	stmt := fmt.Sprintf(`INSERT INTO Projects(project_id, title, color, user_id, date_created)
 						VALUES ('%v','%v','%v','%v','%v')`,
-					req.ProjectId, req.Title, req.Color,req.UserId, req.CreatedAt)
+		req.ProjectId, req.Title, req.Color, req.UserId, req.CreatedAt)
 	_, err := s.conn.Exec(stmt)
 
 	if err != nil {
@@ -27,7 +27,7 @@ func (s *sqlRepo) PersistProject(ctx context.Context, req *projectEntity.CreateP
 	return nil
 }
 
-func (s *sqlRepo) GetListOfProjects(ctx context.Context, userId string) ([]*projectEntity.GetAllUserProjectRes, error){
+func (s *sqlRepo) GetListOfProjects(ctx context.Context, userId string) ([]*projectEntity.GetAllUserProjectRes, error) {
 	stmt := fmt.Sprintf(`
 		SELECT project_id, title, color, user_id FROM Projects
 		WHERE user_id = '%s'
@@ -48,7 +48,6 @@ func (s *sqlRepo) GetListOfProjects(ctx context.Context, userId string) ([]*proj
 			&project.Title,
 			&project.Color,
 			&project.UserId,
-
 		)
 		if err != nil {
 			return nil, err
@@ -62,6 +61,32 @@ func (s *sqlRepo) GetListOfProjects(ctx context.Context, userId string) ([]*proj
 	return projects, nil
 }
 
-func NewProjectSqlRepo(conn *sql.DB) projectRepo.ProjectRepository{
+// Delete project by id
+func (s *sqlRepo) DeleteProjectByID(ctx context.Context, projectId string) error {
+
+	tx, err := s.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+	_, err = tx.ExecContext(ctx, fmt.Sprintf(`Delete from Tasks Where project_id = '%s'`, projectId))
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, fmt.Sprintf(`Delete from Projects  WHERE project_id = '%s'`, projectId))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func NewProjectSqlRepo(conn *sql.DB) projectRepo.ProjectRepository {
 	return &sqlRepo{conn: conn}
 }
