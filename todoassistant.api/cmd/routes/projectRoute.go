@@ -17,12 +17,11 @@ func ProjectRoutes(v1 *gin.RouterGroup, service projectService.ProjectService, s
 	handler := projectHandler.NewProjectHandler(service)
 	project := v1.Group("/project")
 
-
 	project.Use(jwtMWare.ValidateJWT())
 	{
 		project.POST("", handler.CreateProject)
 		project.GET("/", handler.GetAllUsersProjects)
+		project.DELETE("/:projectId", handler.DeleteProjectById)
 	}
-
 
 }

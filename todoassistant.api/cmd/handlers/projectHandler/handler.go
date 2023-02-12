@@ -19,7 +19,7 @@ func NewProjectHandler(srv projectService.ProjectService) *projectHandler {
 	return &projectHandler{srv: srv}
 }
 
-func (p *projectHandler) CreateProject(c *gin.Context){
+func (p *projectHandler) CreateProject(c *gin.Context) {
 	var req projectEntity.CreateProjectReq
 	value := c.GetString("userId")
 	log.Println("userId is: ", value)
@@ -36,7 +36,7 @@ func (p *projectHandler) CreateProject(c *gin.Context){
 		return
 	}
 	req.UserId = value
-	log.Println("create project req",req)
+	log.Println("create project req", req)
 
 	project, errRes := p.srv.PersistProject(&req)
 	if errRes != nil {
@@ -50,7 +50,7 @@ func (p *projectHandler) CreateProject(c *gin.Context){
 
 }
 
-func (p *projectHandler) GetAllUsersProjects(c *gin.Context){
+func (p *projectHandler) GetAllUsersProjects(c *gin.Context) {
 	userId := c.GetString("userId")
 	log.Println(userId)
 	if userId == "" {
@@ -59,7 +59,7 @@ func (p *projectHandler) GetAllUsersProjects(c *gin.Context){
 		return
 	}
 	projects, errRes := p.srv.GetListOfUsersProjects(userId)
-	if projects == nil{
+	if projects == nil {
 		message := "user with id " + userId + " has no project"
 		c.AbortWithStatusJSON(http.StatusOK,
 			ResponseEntity.BuildSuccessResponse(http.StatusNoContent, message, projects, nil))
@@ -75,4 +75,27 @@ func (p *projectHandler) GetAllUsersProjects(c *gin.Context){
 		ResponseEntity.BuildSuccessResponse(http.StatusOK, "Users projects returned successfully", projects, nil))
 }
 
+// Handle Delete task by id
 
+func (p *projectHandler) DeleteProjectById(c *gin.Context) {
+	projectId := c.Params.ByName("projectId")
+	if projectId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "no projectId id was provided", nil, nil))
+		return
+	}
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Authentication Error, Invalid UserId", nil, nil))
+		return
+	}
+	_, errRes := p.srv.DeleteProjectByID(projectId)
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Unable to delete project", errRes, nil))
+		return
+	}
+	rd := ResponseEntity.BuildSuccessResponse(200, "Project deleted successfully", nil, nil)
+	c.JSON(http.StatusOK, rd)
+}
