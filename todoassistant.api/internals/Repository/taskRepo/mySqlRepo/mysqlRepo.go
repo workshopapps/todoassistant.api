@@ -616,6 +616,7 @@ func (s *sqlRepo) EditTaskById(ctx context.Context, taskId string, req *taskEnti
 	if req.Notify {
 		notifyInt = 1
 	}
+	log.Println(req.ProjectId)
 	_, err := s.conn.ExecContext(ctx, fmt.Sprintf(`UPDATE Tasks SET
                  title = '%s',
                  description = '%s',
@@ -625,7 +626,7 @@ func (s *sqlRepo) EditTaskById(ctx context.Context, taskId string, req *taskEnti
                  end_time = '%s',
                  updated_at = '%s',
                  notify = '%d',
-				 project_id =' %s',
+				 project_id ='%s',
                  scheduled_date= '%s'
              WHERE task_id = '%s'
             `, req.Title, req.Description, req.Status, req.StartTime, req.Repeat, req.EndTime, req.UpdatedAt, notifyInt, req.ProjectId, req.ScheduledDate, taskId))
