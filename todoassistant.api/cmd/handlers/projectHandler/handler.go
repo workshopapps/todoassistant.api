@@ -75,8 +75,43 @@ func (p *projectHandler) GetAllUsersProjects(c *gin.Context) {
 		ResponseEntity.BuildSuccessResponse(http.StatusOK, "Users projects returned successfully", projects, nil))
 }
 
-// Handle Delete task by id
+func (p *projectHandler) EditProjectById(c *gin.Context) {
+	var req projectEntity.EditProjectReq
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "error decoding into struct", err, nil))
+		return
+	}
 
+	projectId := c.Params.ByName("projectId")
+	if projectId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "no projectId id was provided", nil, nil))
+		return
+	}
+	req.ProjectId = projectId
+
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Authentication Error, Invalid UserId", nil, nil))
+		return
+	}
+	req.UserId = userId
+
+	result, errRes := p.srv.EditProjectByID(&req)
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Unable to edit project", errRes, nil))
+		return
+	}
+	rd := ResponseEntity.BuildSuccessResponse(200, "Project edit successfully", result, nil)
+	c.JSON(http.StatusOK, rd)
+}
+
+// Handle Delete task by id
 func (p *projectHandler) DeleteProjectById(c *gin.Context) {
 	projectId := c.Params.ByName("projectId")
 	if projectId == "" {
