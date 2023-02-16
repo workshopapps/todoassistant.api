@@ -130,10 +130,10 @@ func (m *sqlRepo) EditProject(ctx context.Context, req *projectEntity.EditProjec
 
 	query := fmt.Sprintf(`UPDATE Projects 
 						SET
-						title = '%v',
-						color = '%v',
-						date_updated = '%v'
-						WHERE user_id = '%v' AND project_id = '%v'`,
+						title = "%s",
+						color = "%s",
+						date_updated = "%s"
+						WHERE user_id = '%s' AND project_id = '%s'`,
 		req.Title, req.Color, req.UpdatedAt, req.UserId, req.ProjectId)
 
 	_, err = tx.ExecContext(ctx, query)
