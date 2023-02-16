@@ -17,7 +17,8 @@ import (
 
 type ProjectService interface {
 	PersistProject(req *projectEntity.CreateProjectReq) (*projectEntity.CreateProjectRes, *ResponseEntity.ServiceError)
-	GetListOfUsersProjects(userId string) ([]*projectEntity.GetAllUserProjectRes, *ResponseEntity.ServiceError)
+	GetListOfUsersProjects(userId string) ([]*projectEntity.GetProjectRes, *ResponseEntity.ServiceError)
+	EditProjectByID(req *projectEntity.EditProjectReq) (*ResponseEntity.ResponseMessage, *ResponseEntity.ServiceError)
 	DeleteProjectByID(projectId string) (*ResponseEntity.ResponseMessage, *ResponseEntity.ServiceError)
 }
 
@@ -26,10 +27,6 @@ type projectSrv struct {
 	timeSrv       timeSrv.TimeService
 	validationSrv validationService.ValidationSrv
 	logger        loggerService.LogSrv
-}
-
-func NewProjectSrv(repo projectRepo.ProjectRepository, timeSrv timeSrv.TimeService, validationSrv validationService.ValidationSrv, logger loggerService.LogSrv) ProjectService {
-	return &projectSrv{repo: repo, timeSrv: timeSrv, validationSrv: validationSrv, logger: logger}
 }
 
 func (p *projectSrv) PersistProject(req *projectEntity.CreateProjectReq) (*projectEntity.CreateProjectRes, *ResponseEntity.ServiceError) {
@@ -60,7 +57,7 @@ func (p *projectSrv) PersistProject(req *projectEntity.CreateProjectReq) (*proje
 	return &data, nil
 }
 
-func (p *projectSrv) GetListOfUsersProjects(userId string) ([]*projectEntity.GetAllUserProjectRes, *ResponseEntity.ServiceError) {
+func (p *projectSrv) GetListOfUsersProjects(userId string) ([]*projectEntity.GetProjectRes, *ResponseEntity.ServiceError) {
 
 	// create context of 1 minute
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Minute*1)
@@ -78,6 +75,32 @@ func (p *projectSrv) GetListOfUsersProjects(userId string) ([]*projectEntity.Get
 	return projects, nil
 }
 
+func (p *projectSrv) EditProjectByID(req *projectEntity.EditProjectReq) (*ResponseEntity.ResponseMessage, *ResponseEntity.ServiceError) {
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
+	defer cancelFunc()
+
+	err := p.validationSrv.Validate(req)
+	if err != nil {
+		log.Println(err)
+		return nil, ResponseEntity.NewValidatingError("Bad Data Input")
+	}
+
+	project, err := p.repo.GetProject(ctx, req.ProjectId, req.UserId)
+	if err != nil {
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+	req = Check(req, project.Color, project.Title)
+	req.UpdatedAt = p.timeSrv.CurrentTime().Format(time.RFC3339)
+
+	result, err := p.repo.EditProject(ctx, req)
+	if err != nil {
+		log.Println(err)
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+
+	return ResponseEntity.BuildSuccessResponse(http.StatusOK, "Project updated successfully", result, nil), nil
+}
+
 func (p *projectSrv) DeleteProjectByID(projectId string) (*ResponseEntity.ResponseMessage, *ResponseEntity.ServiceError) {
 	// create context of 1 minute
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Minute*1)
@@ -89,4 +112,19 @@ func (p *projectSrv) DeleteProjectByID(projectId string) (*ResponseEntity.Respon
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
 	return ResponseEntity.BuildSuccessResponse(http.StatusOK, "project Deleted successfully", nil, nil), nil
+}
+
+func NewProjectSrv(repo projectRepo.ProjectRepository, timeSrv timeSrv.TimeService, validationSrv validationService.ValidationSrv, logger loggerService.LogSrv) ProjectService {
+	return &projectSrv{repo: repo, timeSrv: timeSrv, validationSrv: validationSrv, logger: logger}
+}
+
+func Check(req *projectEntity.EditProjectReq, color, title string) *projectEntity.EditProjectReq {
+	if req.Color == "" {
+		req.Color = color
+	}
+	if req.Title == "" {
+		req.Title = title
+	}
+
+	return req
 }

@@ -37,7 +37,7 @@ func TaskRoutes(v1 *gin.RouterGroup, service taskService.TaskService, srv tokens
 		task.DELETE("/comment/:commentId", handler.DeleteComment) //delete comment
 
 		//task.PUT("/comment", handler.CreateComment)   //edit comment
-		task.PUT("/:taskId", handler.EditTaskById) //EditTaskById
+		task.PATCH("/:taskId", handler.EditTaskById) //EditTaskById
 		task.GET("/search", handler.SearchTask)
 
 		//assign task to VA
