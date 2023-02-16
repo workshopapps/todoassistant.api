@@ -16,7 +16,23 @@ type CreateProjectRes struct {
 	Color     string `json:"color" validate:"required,min=3"`
 }
 
-type GetAllUserProjectRes struct {
+type EditProjectReq struct {
+	ProjectId string `json:"project_id"`
+	Title     string `json:"title"`
+	Color     string `json:"color"`
+	UserId    string `json:"user_id"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type EditProjectRes struct {
+	ProjectId string `json:"project_id"`
+	UserId    string `json:"user_id"`
+	Title     string `json:"title"`
+	Color     string `json:"color"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type GetProjectRes struct {
 	ProjectId string `json:"project_id"`
 	Title     string `json:"title"`
 	Color     string `json:"color"`
