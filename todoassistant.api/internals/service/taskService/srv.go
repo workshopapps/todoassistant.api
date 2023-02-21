@@ -316,6 +316,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		Description:  req.Description,
 		StartTime:    req.StartTime,
 		EndTime:      req.EndTime,
+		Notify:       req.Notify,
 		VAOption:     req.VAOption,
 		Repeat:       req.Repeat,
 		TaskFeatures: features,
