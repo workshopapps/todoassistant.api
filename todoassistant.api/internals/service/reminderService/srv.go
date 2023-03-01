@@ -1,12 +1,10 @@
 package reminderService
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
 	"test-va/internals/Repository/reminderRepo"
-	"test-va/internals/Repository/taskRepo"
 	"test-va/internals/entity/notificationEntity"
 	"test-va/internals/entity/taskEntity"
 	"test-va/internals/service/notificationService"
@@ -31,19 +29,19 @@ type ReminderSrv interface {
 
 type reminderSrv struct {
 	cron *gocron.Scheduler
-	conn *sql.DB
+	// conn *sql.DB
 	repo reminderRepo.ReminderRepository
 	nSrv notificationService.NotificationSrv
 }
 
 func (r *reminderSrv) SetBiWeeklyReminder(data *taskEntity.CreateTaskReq) error {
-	s := gocron.NewScheduler(time.UTC)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
-	s.Every(14).Weeks().StartAt(dDate).Do(func() error {
+
+	r.cron.Every(14).Weeks().StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
 		r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
@@ -62,19 +60,19 @@ func (r *reminderSrv) SetBiWeeklyReminder(data *taskEntity.CreateTaskReq) error 
 		}
 		return nil
 	})
-	s.StartAsync()
+
+	r.cron.StartAsync()
 	log.Println("created new eventService.")
 	return nil
 }
 
 func (r *reminderSrv) SetYearlyReminder(data *taskEntity.CreateTaskReq) error {
-	s := gocron.NewScheduler(time.UTC)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
-	s.Every(12).Months().StartAt(dDate).Do(func() error {
+	r.cron.Every(12).Months().StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
 		r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
@@ -93,19 +91,20 @@ func (r *reminderSrv) SetYearlyReminder(data *taskEntity.CreateTaskReq) error {
 		}
 		return nil
 	})
-	s.StartAsync()
+
+	r.cron.StartAsync()
 	log.Println("created new eventService.")
 	return nil
 }
 
 func (r *reminderSrv) SetMonthlyReminder(data *taskEntity.CreateTaskReq) error {
-	s := gocron.NewScheduler(time.UTC)
+	// // s := gocron.NewScheduler(time.UTC)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
-	s.Every(1).Months().StartAt(dDate).Do(func() error {
+	r.cron.Every(1).Months().StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
 		r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
@@ -122,7 +121,7 @@ func (r *reminderSrv) SetMonthlyReminder(data *taskEntity.CreateTaskReq) error {
 		if err != nil {
 			return err
 		}
-		s.StartAsync()
+		r.cron.StartAsync()
 		return nil
 	})
 	log.Println("created new eventService.")
@@ -130,13 +129,13 @@ func (r *reminderSrv) SetMonthlyReminder(data *taskEntity.CreateTaskReq) error {
 }
 
 func (r *reminderSrv) SetWeeklyReminder(data *taskEntity.CreateTaskReq) error {
-	s := gocron.NewScheduler(time.UTC)
+	// // s := gocron.NewScheduler(time.UTC)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
-	s.Every(7).Day().StartAt(dDate).Do(func() error {
+	r.cron.Every(7).Day().StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
 		r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
@@ -154,7 +153,7 @@ func (r *reminderSrv) SetWeeklyReminder(data *taskEntity.CreateTaskReq) error {
 		if err != nil {
 			return err
 		}
-		s.StartAsync()
+		r.cron.StartAsync()
 		return nil
 	})
 	log.Println("created new eventService.")
@@ -162,27 +161,31 @@ func (r *reminderSrv) SetWeeklyReminder(data *taskEntity.CreateTaskReq) error {
 }
 
 func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
-	s := gocron.NewScheduler(time.UTC)
-
+	// s := gocron.NewScheduler(time.UTC)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
+
 	if dDate.Before(time.Now()) {
 		return errors.New("invalid Time, try again")
 	}
 
-	s.Every(1).Days().StartAt(dDate).Do(func() error {
+	r.cron.Every(1).Days().StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
 		log.Printf("\n")
-		r.repo.SetTaskToExpired(data.TaskId)
+		if err := r.repo.SetTaskToExpired(data.TaskId); err != nil {
+			return err
+		}
+
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err
 		}
 
 		data.StartTime = data.EndTime
+		data.UpdatedAt = data.EndTime
 		data.EndTime = endDate.AddDate(0, 0, 1).Format(time.RFC3339)
 		data.Status = "PENDING"
 		data.TaskId = uuid.New().String()
@@ -211,21 +214,21 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 
 		return nil
 	})
-	s.StartAsync()
+	r.cron.StartAsync()
 	return nil
 }
 
 func (r *reminderSrv) SetReminder(data *taskEntity.CreateTaskReq) error {
 	dueDate := data.EndTime
 	taskId := data.TaskId
-	s := gocron.NewScheduler(time.UTC)
+	// s := gocron.NewScheduler(time.UTC)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, dueDate)
 	if err != nil {
 		return err
 	}
 
-	s.Every(1).StartAt(dDate).Do(func() {
+	r.cron.Every(1).StartAt(dDate).Do(func() {
 		log.Println("setting status to expired")
 		r.repo.SetTaskToExpired(taskId)
 
@@ -280,8 +283,8 @@ func (r *reminderSrv) SetReminder(data *taskEntity.CreateTaskReq) error {
 		}
 	})
 
-	s.LimitRunsTo(1)
-	s.StartAsync()
+	r.cron.LimitRunsTo(1)
+	r.cron.StartAsync()
 	return nil
 }
 
@@ -463,6 +466,6 @@ func (r *reminderSrv) ScheduleNotificationEverySixHours() {
 // 	return tasks, nil
 // }
 
-func NewReminderSrv(s *gocron.Scheduler, conn *sql.DB, taskrepo taskRepo.TaskRepository, nSrv notificationService.NotificationSrv) ReminderSrv {
-	return &reminderSrv{cron: s, conn: conn, repo: taskrepo, nSrv: nSrv}
+func NewReminderSrv(s *gocron.Scheduler, reminderRepo reminderRepo.ReminderRepository, nSrv notificationService.NotificationSrv) ReminderSrv {
+	return &reminderSrv{cron: s, repo: reminderRepo, nSrv: nSrv}
 }

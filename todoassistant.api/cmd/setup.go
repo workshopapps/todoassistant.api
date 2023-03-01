@@ -214,7 +214,7 @@ func Setup() {
 	// cron service
 	s := gocron.NewScheduler(time.UTC)
 
-	reminderSrv := reminderService.NewReminderSrv(s, conn, remindRepo, notificationSrv)
+	reminderSrv := reminderService.NewReminderSrv(s, remindRepo, notificationSrv)
 
 	if firebaseApp != nil {
 		reminderSrv.ScheduleNotificationEverySixHours()

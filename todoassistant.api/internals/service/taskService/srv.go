@@ -230,6 +230,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 
 	//set time
 	req.CreatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
+	req.UpdatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
 	//set id
 	req.TaskId = uuid.New().String()
 	req.Status = "PENDING"
