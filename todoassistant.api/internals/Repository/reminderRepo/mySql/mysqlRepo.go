@@ -5,7 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"test-va/internals/Repository/taskRepo"
+
+	"test-va/internals/Repository/reminderRepo"
 	"test-va/internals/entity/taskEntity"
 	"test-va/internals/entity/vaEntity"
 )
@@ -812,6 +813,6 @@ func (s *sqlRepo) DeleteCommentByID(ctx context.Context, commentId string) error
 	return nil
 }
 
-func NewSqlRepo(conn *sql.DB) taskRepo.TaskRepository {
+func NewSqlRepo(conn *sql.DB) reminderRepo.ReminderRepository {
 	return &sqlRepo{conn: conn}
 }

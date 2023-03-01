@@ -1,4 +1,4 @@
-package taskRepo
+package reminderRepo
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"test-va/internals/entity/vaEntity"
 )
 
-type TaskRepository interface {
+type ReminderRepository interface {
 	Persist(ctx context.Context, req *taskEntity.CreateTaskReq) error
 	PersistAndAssign(ctx context.Context, req *taskEntity.CreateTaskReq) error
 	GetPendingTasks(userId string, ctx context.Context) ([]*taskEntity.GetPendingTasksRes, error)

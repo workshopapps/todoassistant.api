@@ -14,6 +14,7 @@ import (
 	mySqlCallRepo "test-va/internals/Repository/callRepo/mySqlRepo"
 	mySqlNotifRepo "test-va/internals/Repository/notificationRepo/mysqlRepo"
 	projectMysqlRepo "test-va/internals/Repository/projectRepo/mySqlRepo"
+	mySqlRemindRepo "test-va/internals/Repository/reminderRepo/mySqlRepo"
 	mySqlRepo4 "test-va/internals/Repository/subscribeRepo/mySqlRepo"
 	"test-va/internals/Repository/taskRepo/mySqlRepo"
 	mySqlRepo2 "test-va/internals/Repository/userRepo/mySqlRepo"
@@ -163,13 +164,16 @@ func Setup() {
 
 	projectRepo := projectMysqlRepo.NewProjectSqlRepo(conn)
 	// task repo service
-	repo := mySqlRepo.NewSqlRepo(conn)
+	taskRepo := mySqlRepo.NewSqlRepo(conn)
 
 	//user repo service
 	userRepo := mySqlRepo2.NewMySqlUserRepo(conn)
 
 	//notification repo service
 	notificationRepo := mySqlNotifRepo.NewMySqlNotificationRepo(conn)
+
+	//reminder repo service
+	remindRepo := mySqlRemindRepo.NewSqlRepo(conn)
 
 	//va repo service
 	vaRepo := mySqlRepo3.NewVASqlRepo(conn)
@@ -210,7 +214,7 @@ func Setup() {
 	// cron service
 	s := gocron.NewScheduler(time.UTC)
 
-	reminderSrv := reminderService.NewReminderSrv(s, conn, repo, notificationSrv)
+	reminderSrv := reminderService.NewReminderSrv(s, conn, remindRepo, notificationSrv)
 
 	if firebaseApp != nil {
 		reminderSrv.ScheduleNotificationEverySixHours()
@@ -253,7 +257,7 @@ func Setup() {
 	projectSrv := projectService.NewProjectSrv(projectRepo, timeSrv, validationSrv, logger)
 
 	// task service
-	taskSrv := taskService.NewTaskSrv(repo, timeSrv, validationSrv, logger, reminderSrv, notificationSrv)
+	taskSrv := taskService.NewTaskSrv(taskRepo, timeSrv, validationSrv, logger, reminderSrv, notificationSrv)
 
 	// user service
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"test-va/internals/Repository/reminderRepo"
 	"test-va/internals/Repository/taskRepo"
 	"test-va/internals/entity/notificationEntity"
 	"test-va/internals/entity/taskEntity"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	"github.com/google/uuid"
 )
 
 type ReminderSrv interface {
@@ -30,7 +32,7 @@ type ReminderSrv interface {
 type reminderSrv struct {
 	cron *gocron.Scheduler
 	conn *sql.DB
-	repo taskRepo.TaskRepository
+	repo reminderRepo.ReminderRepository
 	nSrv notificationService.NotificationSrv
 }
 
@@ -54,7 +56,7 @@ func (r *reminderSrv) SetBiWeeklyReminder(data *taskEntity.CreateTaskReq) error 
 		data.Status = "PENDING"
 		log.Println(data)
 
-		err = r.repo.SetNewEvent(data)
+		err = r.repo.CreateNewTask(data)
 		if err != nil {
 			return err
 		}
@@ -85,7 +87,7 @@ func (r *reminderSrv) SetYearlyReminder(data *taskEntity.CreateTaskReq) error {
 		data.Status = "PENDING"
 		log.Println(data)
 
-		err = r.repo.SetNewEvent(data)
+		err = r.repo.CreateNewTask(data)
 		if err != nil {
 			return err
 		}
@@ -116,7 +118,7 @@ func (r *reminderSrv) SetMonthlyReminder(data *taskEntity.CreateTaskReq) error {
 		data.Status = "PENDING"
 		log.Println(data)
 
-		err = r.repo.SetNewEvent(data)
+		err = r.repo.CreateNewTask(data)
 		if err != nil {
 			return err
 		}
@@ -145,9 +147,10 @@ func (r *reminderSrv) SetWeeklyReminder(data *taskEntity.CreateTaskReq) error {
 		data.StartTime = data.EndTime
 		data.EndTime = endDate.AddDate(0, 0, 7).Format(time.RFC3339)
 		data.Status = "PENDING"
+		data.TaskId = uuid.New().String()
 		log.Println(data)
 
-		err = r.repo.SetNewEvent(data)
+		err = r.repo.CreateNewTask(data)
 		if err != nil {
 			return err
 		}
@@ -182,10 +185,11 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 		data.StartTime = data.EndTime
 		data.EndTime = endDate.AddDate(0, 0, 1).Format(time.RFC3339)
 		data.Status = "PENDING"
+		data.TaskId = uuid.New().String()
 
 		log.Println(data)
 
-		err = r.repo.SetNewEvent(data)
+		err = r.repo.CreateNewTask(data)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -282,7 +286,7 @@ func (r *reminderSrv) SetReminder(data *taskEntity.CreateTaskReq) error {
 }
 
 func (r *reminderSrv) SetReminderEvery5Min() {
-	tasks, err := getPendingTasks(r.conn)
+	tasks, err := r.repo.GetAllUsersPendingTasks()
 	if err != nil {
 		log.Println(err)
 		return
@@ -305,7 +309,7 @@ func (r *reminderSrv) SetReminderEvery5Min() {
 }
 
 func (r *reminderSrv) SetReminderEvery30Min() {
-	tasks, err := getPendingTasks(r.conn)
+	tasks, err := r.repo.GetAllUsersPendingTasks()
 	if err != nil {
 		log.Println(err)
 		return
@@ -347,7 +351,6 @@ func checkIfTimeElapsed30Minutes(endTime string) bool {
 }
 
 func checkIfTimeElapsed5Minutes(due string) bool {
-
 	dueTime, err := time.Parse(time.RFC3339, due)
 	if err != nil {
 		log.Println(err)
@@ -434,54 +437,31 @@ func (r *reminderSrv) ScheduleNotificationEverySixHours() {
 	})
 }
 
-func getPendingTasks(conn *sql.DB) ([]taskEntity.GetPendingTasks, error) {
-	stmt := fmt.Sprint(`
-		SELECT T.task_id, T.user_id, T.title,T.description, T.end_time, N.device_id
-		FROM Tasks T join Notification_Tokens N on T.user_id = N.user_id
-		WHERE status = 'PENDING';
-	`)
-	var tasks []taskEntity.GetPendingTasks
-	query, err := conn.Query(stmt)
-	if err != nil {
-		return nil, err
-	}
-	for query.Next() {
-		var task taskEntity.GetPendingTasks
-		var deviceId string
-		err = query.Scan(&task.TaskId, &task.UserId, &task.Title, &task.Description, &task.EndTime, &deviceId)
-		if err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, task)
-	}
-	return tasks, nil
-}
+// func getExpiredTasks(conn *sql.DB) ([]notificationEntity.GetExpiredTasksWithDeviceId, error) {
+// 	stmt := fmt.Sprint(`
+// 		SELECT task_id, Tasks.user_id, title ,description, end_time, device_id, va_id
+// 		FROM Tasks
+// 		INNER JOIN Notification_Tokens ON Tasks.user_id = Notification_Tokens.user_id
+// 		WHERE Tasks.status = 'EXPIRED';
+// 	`)
 
-func getExpiredTasks(conn *sql.DB) ([]notificationEntity.GetExpiredTasksWithDeviceId, error) {
-	stmt := fmt.Sprint(`
-		SELECT task_id, Tasks.user_id, title ,description, end_time, device_id, va_id
-		FROM Tasks
-		INNER JOIN Notification_Tokens ON Tasks.user_id = Notification_Tokens.user_id
-		WHERE Tasks.status = 'EXPIRED';
-	`)
+// 	var tasks []notificationEntity.GetExpiredTasksWithDeviceId
 
-	var tasks []notificationEntity.GetExpiredTasksWithDeviceId
-
-	query, err := conn.Query(stmt)
-	if err != nil {
-		return nil, err
-	}
-	for query.Next() {
-		var task notificationEntity.GetExpiredTasksWithDeviceId
-		var deviceId string
-		err = query.Scan(&task.TaskId, &task.UserId, &task.Title, &task.Description, &task.EndTime, &deviceId)
-		if err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, task)
-	}
-	return tasks, nil
-}
+// 	query, err := conn.Query(stmt)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	for query.Next() {
+// 		var task notificationEntity.GetExpiredTasksWithDeviceId
+// 		var deviceId string
+// 		err = query.Scan(&task.TaskId, &task.UserId, &task.Title, &task.Description, &task.EndTime, &deviceId)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		tasks = append(tasks, task)
+// 	}
+// 	return tasks, nil
+// }
 
 func NewReminderSrv(s *gocron.Scheduler, conn *sql.DB, taskrepo taskRepo.TaskRepository, nSrv notificationService.NotificationSrv) ReminderSrv {
 	return &reminderSrv{cron: s, conn: conn, repo: taskrepo, nSrv: nSrv}
