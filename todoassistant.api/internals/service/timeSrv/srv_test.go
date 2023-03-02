@@ -23,3 +23,28 @@ func Test_timeStruct_CalcEndTime(t *testing.T) {
 		})
 	}
 }
+
+func Test_timeStruct_TimeBefore(t *testing.T) {
+	type args struct {
+		time1 time.Time
+	}
+
+	tests := []struct {
+		name string
+		tr   timeStruct
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+		// {"First test", timeStruct{}, args{time.Now()}, false},
+		{"Second test", timeStruct{}, args{time.Date(2023, time.December, 21, 0, 0, 0, 0, time.UTC)}, false},
+		{"Third test", timeStruct{}, args{time.Date(2022, time.December, 21, 0, 0, 0, 0, time.UTC)}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.TimeBefore(tt.args.time1); got != tt.want {
+				t.Errorf("timeStruct.TimeBefore() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

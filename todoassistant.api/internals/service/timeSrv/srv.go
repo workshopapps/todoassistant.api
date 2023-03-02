@@ -38,7 +38,7 @@ func (t timeStruct) CalcEndTime() time.Time {
 }
 
 func (t timeStruct) TimeBefore(time1 time.Time) bool {
-	return t.CurrentTime().Local().Before(time1)
+	return !t.CurrentTime().Local().Before(time1)
 }
 
 func (t timeStruct) TimeAfter(time1 time.Time) bool {

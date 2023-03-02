@@ -24,10 +24,11 @@ func (s *sqlRepo) CreateNewTask(req *taskEntity.CreateTaskReq) error {
                   end_time,
                   created_at,
                   va_option,
-                  repeat_frequency
+                  repeat_frequency,
+				  schedule_date
                   )
-	VALUES ('%v','%v','%v','%v','%v','%v','%v','%v','%v')
-	`, req.TaskId, req.UserId, req.Title, req.Description, req.StartTime, req.EndTime, req.CreatedAt, req.VAOption, req.Repeat)
+	VALUES ('%v','%v','%v','%v','%v','%v','%v','%v','%v', '%v')
+	`, req.TaskId, req.UserId, req.Title, req.Description, req.StartTime, req.EndTime, req.CreatedAt, req.VAOption, req.Repeat, req.ScheduledDate)
 	_, err := s.conn.Exec(stmt)
 	if err != nil {
 		log.Println(stmt)

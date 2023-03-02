@@ -239,14 +239,17 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		req.StartTime = t.timeSrv.CurrentTime().Format(time.RFC3339)
 	}
 
-	if req.EndTime == "" && req.ScheduledDate == "" {
+	if req.EndTime == "" {
 		req.EndTime = t.timeSrv.CalcEndTime().Format(time.RFC3339)
-	} else {
-		schedule, err := time.Parse(time.RFC3339, req.ScheduledDate)
+	}
+
+	var schedule time.Time
+	if req.ScheduledDate != "" {
+		schedule, err = time.Parse(time.RFC3339, req.ScheduledDate)
 		if err != nil {
-			return nil, ResponseEntity.NewCustomServiceError("Invalid schedule time", err)
+			return nil, ResponseEntity.NewCustomServiceError("Invalid schedule date", err)
 		}
-		req.EndTime = schedule.Format(time.RFC3339)
+		req.ScheduledDate = schedule.Format(time.RFC3339)
 	}
 
 	//check if timeDueDate and StartDate is valid
@@ -313,21 +316,19 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		features.IsScheduled = true
 	}
 
-	features.IsExpired = false
-	features.IsCompleted = false
-
 	data := taskEntity.CreateTaskRes{
-		TaskId:       req.TaskId,
-		Title:        req.Title,
-		Description:  req.Description,
-		StartTime:    req.StartTime,
-		EndTime:      req.EndTime,
-		Notify:       req.Notify,
-		VAOption:     req.VAOption,
-		Repeat:       req.Repeat,
-		TaskFeatures: features,
-		CreatedAt:    req.CreatedAt,
-		ProjectId:    req.ProjectId,
+		TaskId:        req.TaskId,
+		Title:         req.Title,
+		Description:   req.Description,
+		StartTime:     req.StartTime,
+		EndTime:       req.EndTime,
+		Notify:        req.Notify,
+		VAOption:      req.VAOption,
+		Repeat:        req.Repeat,
+		TaskFeatures:  features,
+		CreatedAt:     req.CreatedAt,
+		ProjectId:     req.ProjectId,
+		ScheduledDate: req.ScheduledDate,
 	}
 
 	tokens, vaId, username, err := t.nSrv.GetUserVaToken(req.UserId)
