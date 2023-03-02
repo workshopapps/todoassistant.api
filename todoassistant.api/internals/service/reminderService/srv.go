@@ -173,12 +173,11 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 	}
 
 	r.cron.Every(1).Days().StartAt(dDate).Do(func() error {
-		log.Println("setting status to expired")
-		log.Printf("\n")
-		if err := r.repo.SetTaskToExpired(data.TaskId); err != nil {
-			return err
-		}
-
+		// log.Println("setting status to expired")
+		// log.Printf("\n")
+		// if err := r.repo.SetTaskToExpired(data.TaskId); err != nil {
+		// 	return err
+		// }
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err

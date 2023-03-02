@@ -230,7 +230,6 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 
 	//set time
 	req.CreatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
-	req.UpdatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
 	//set id
 	req.TaskId = uuid.New().String()
 	req.Status = "PENDING"
@@ -240,8 +239,14 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		req.StartTime = t.timeSrv.CurrentTime().Format(time.RFC3339)
 	}
 
-	if req.EndTime == "" {
+	if req.EndTime == "" && req.ScheduledDate == "" {
 		req.EndTime = t.timeSrv.CalcEndTime().Format(time.RFC3339)
+	} else {
+		schedule, err := time.Parse(time.RFC3339, req.ScheduledDate)
+		if err != nil {
+			return nil, ResponseEntity.NewCustomServiceError("Invalid schedule time", err)
+		}
+		req.EndTime = schedule.Format(time.RFC3339)
 	}
 
 	//check if timeDueDate and StartDate is valid
@@ -307,9 +312,9 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 	if req.ScheduledDate != "" {
 		features.IsScheduled = true
 	}
-	if req.Status == "EXPIRED" {
-		features.IsExpired = true
-	}
+
+	features.IsExpired = false
+	features.IsCompleted = false
 
 	data := taskEntity.CreateTaskRes{
 		TaskId:       req.TaskId,
@@ -439,7 +444,6 @@ func (t *taskSrv) GetTaskByID(taskId string) (*taskEntity.GetTasksByIdRes, *Resp
 	}
 	log.Println("From getByID", task)
 	return task, nil
-
 }
 
 // Get Expired Tasks godoc

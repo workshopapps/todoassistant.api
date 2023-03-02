@@ -8,6 +8,8 @@ import (
 	"test-va/internals/Repository/taskRepo"
 	"test-va/internals/entity/taskEntity"
 	"test-va/internals/entity/vaEntity"
+	"test-va/internals/service/timeSrv"
+	"time"
 )
 
 type sqlRepo struct {
@@ -327,8 +329,8 @@ func (s *sqlRepo) SearchTasks(title *taskEntity.SearchTitleParams, ctx context.C
 // get task by ID
 
 func (s *sqlRepo) GetTaskByID(ctx context.Context, taskId string) (*taskEntity.GetTasksByIdRes, error) {
-
-	var res taskEntity.GetTasksByIdRes
+	var task taskEntity.GetTasksByIdRes
+	tim := timeSrv.NewTimeStruct()
 	tx, err := s.conn.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -343,10 +345,53 @@ func (s *sqlRepo) GetTaskByID(ctx context.Context, taskId string) (*taskEntity.G
 	}()
 
 	stmt := fmt.Sprintf(`
-		SELECT T.task_id, T.user_id, COALESCE(T.va_id, ''), T.title, T.description, T.status, T.start_time, T.end_time, T.created_at
+		SELECT task_id, user_id, title, description, status, start_time, repeat_frequency, end_time, created_at, COALESCE(updated_at, ""), COALESCE(va_id,""), notify, COALESCE(project_id,""), COALESCE(scheduled_date,"")
 		FROM Tasks T
-		WHERE task_id = '%s'
-	`, taskId)
+		WHERE task_id = '%s'`, taskId)
+
+	row := tx.QueryRow(stmt)
+	if err := row.Scan(
+		&task.TaskId,
+		&task.UserId,
+		&task.Title,
+		&task.Description,
+		&task.Status,
+		&task.StartTime,
+		&task.Repeat,
+		&task.EndTime,
+		&task.CreatedAt,
+		&task.UpdatedAt,
+		&task.VaId,
+		&task.Notify,
+		&task.ProjectId,
+		&task.ScheduledDate,
+	); err != nil {
+		return nil, err
+	}
+
+	var features taskEntity.TaskFeatures
+	if task.VaId != "" {
+		features.IsAssigned = true
+	}
+	if task.ScheduledDate != "" {
+		features.IsScheduled = true
+	}
+
+	end, err := time.Parse(time.RFC3339, task.EndTime)
+	if err != nil {
+		return nil, err
+	}
+
+	if tim.TimeBefore(end) && task.Status == "PENDING" {
+		log.Println(tim.TimeBefore(end))
+		features.IsExpired = true
+	}
+
+	if task.Status == "COMPLETED" {
+		features.IsCompleted = true
+	}
+
+	task.TaskFeatures = features
 
 	stmt2 := fmt.Sprintf(`
 		SELECT F.file_link, F.file_type
@@ -356,21 +401,7 @@ func (s *sqlRepo) GetTaskByID(ctx context.Context, taskId string) (*taskEntity.G
 		WHERE F.task_id = '%s'
 	`, taskId)
 
-	row := tx.QueryRow(stmt)
-	if err := row.Scan(
-		&res.TaskId,
-		&res.UserId,
-		&res.VaId,
-		&res.Title,
-		&res.Description,
-		&res.Status,
-		&res.StartTime,
-		&res.EndTime,
-		&res.CreatedAt,
-	); err != nil {
-		return nil, err
-	}
-	log.Println("Created AT", res)
+	log.Println("Created AT", task)
 	rows, err := tx.QueryContext(ctx, stmt2)
 	if err != nil {
 		return nil, err
@@ -387,10 +418,10 @@ func (s *sqlRepo) GetTaskByID(ctx context.Context, taskId string) (*taskEntity.G
 		if err != nil {
 			return nil, err
 		}
-		res.Files = append(res.Files, taskFile)
+		task.Files = append(task.Files, taskFile)
 	}
 
-	return &res, nil
+	return &task, nil
 }
 
 func (s *sqlRepo) GetListOfExpiredTasks(ctx context.Context) ([]*taskEntity.GetAllExpiredRes, error) {
@@ -467,7 +498,7 @@ func (s *sqlRepo) GetListOfPendingTasks(ctx context.Context) ([]*taskEntity.GetA
 
 // Get All task
 func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity.GetAllTaskRes, error) {
-
+	tim := timeSrv.NewTimeStruct()
 	//tx, err := s.conn.BeginTx(ctx, nil)
 	db, err := s.conn.Begin()
 	if err != nil {
@@ -476,7 +507,7 @@ func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity
 	log.Println("HERE ", userId)
 	stmt := fmt.Sprintf(`
 		SELECT task_id, title, description, status, start_time, repeat_frequency, end_time, created_at, COALESCE(updated_at, ""), COALESCE(va_id,""), notify, COALESCE(project_id,""), COALESCE(scheduled_date,"")
-		FROM Tasks T WHERE user_id= '%s'`, userId)
+		FROM Tasks T WHERE user_id = '%s'`, userId)
 
 	rows, err := db.QueryContext(ctx, stmt)
 	if err != nil {
@@ -489,7 +520,7 @@ func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity
 	for rows.Next() {
 		var singleTask taskEntity.GetAllTaskRes
 
-		err := rows.Scan(
+		if err := rows.Scan(
 			&singleTask.TaskId,
 			&singleTask.Title,
 			&singleTask.Description,
@@ -503,11 +534,11 @@ func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity
 			&singleTask.Notify,
 			&singleTask.ProjectId,
 			&singleTask.ScheduledDate,
-		)
-		if err != nil {
+		); err != nil {
 			log.Println("error ", err)
 			return nil, err
 		}
+
 		var features taskEntity.TaskFeatures
 		if singleTask.VaId != "" {
 			features.IsAssigned = true
@@ -515,9 +546,21 @@ func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity
 		if singleTask.ScheduledDate != "" {
 			features.IsScheduled = true
 		}
-		if singleTask.Status == "EXPIRED" {
+
+		end, err := time.Parse(time.RFC3339, singleTask.EndTime)
+		if err != nil {
+			return nil, err
+		}
+
+		if tim.TimeBefore(end) && singleTask.Status == "PENDING" {
+			log.Println(tim.TimeBefore(end))
 			features.IsExpired = true
 		}
+
+		if singleTask.Status == "COMPLETED" {
+			features.IsCompleted = true
+		}
+
 		singleTask.TaskFeatures = features
 		AllTasks = append(AllTasks, &singleTask)
 	}
