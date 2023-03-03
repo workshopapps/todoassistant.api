@@ -1,13 +1,11 @@
 package middlewares
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
 )
 
 func CORS() gin.HandlerFunc {
-	log.Println("inside here")
+	// log.Println("inside here")
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		// c.Writer.Header().Add("Access-Control-Allow-Credentials", true)
@@ -19,7 +17,7 @@ func CORS() gin.HandlerFunc {
 			c.AbortWithStatus(204)
 			return
 		}
-		log.Println("cors done")
+		//		log.Println("cors done")
 		c.Next()
 	}
 }

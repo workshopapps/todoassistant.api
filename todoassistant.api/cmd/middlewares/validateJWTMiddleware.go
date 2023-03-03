@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"test-va/internals/entity/ResponseEntity"
@@ -28,16 +27,15 @@ func (j *jwtMiddleWare) ValidateJWT() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, "Invalid Token")
 			return
 		}
+
 		auth := strings.Split(authHeader, " ")
-
 		token, err := j.tokenSrv.ValidateToken(auth[1])
-
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("invalid Token: %v", err))
 			return
 		}
+
 		c.Set("userId", token.Id)
-		log.Println("middleware passed")
 		c.Next()
 	}
 }

@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"test-va/internals/Repository/taskRepo/mySqlRepo"
+	notiRepo "test-va/internals/Repository/notificationRepo/mysqlRepo"
+	"test-va/internals/Repository/reminderRepo/mySqlRepo"
 	"test-va/internals/data-store/mysql"
+	"test-va/internals/entity/taskEntity"
+	"test-va/internals/service/notificationService"
+	"test-va/internals/service/validationService"
 	"testing"
 	"time"
 
+	firebase "firebase.google.com/go"
 	"github.com/go-co-op/gocron"
 )
 
@@ -27,11 +32,22 @@ func Test_reminderSrv_SetReminder(t *testing.T) {
 	defer connection.Close()
 	conn := connection.GetConn()
 	repo := mySqlRepo.NewSqlRepo(conn)
+	notificationRepo := notiRepo.NewMySqlNotificationRepo(conn)
+	validationSrv := validationService.NewValidationStruct()
+
+	notificationSrv := notificationService.New(&firebase.App{}, notificationRepo, validationSrv)
+	if err != nil {
+		fmt.Println("Could Not Send Message", err)
+	}
 
 	gcrn := gocron.NewScheduler(time.UTC)
-	srv := NewReminderSrv(gcrn, conn, repo)
+	srv := NewReminderSrv(gcrn, repo, notificationSrv)
+
+	var data taskEntity.CreateTaskReq
 	due := time.Now().Add(15 * time.Second).Format(time.RFC3339)
-	srv.SetReminder(due, taskId)
+	data.EndTime = due
+	data.TaskId = taskId
+	srv.SetReminder(&data)
 
 	time.Sleep(5 * time.Minute)
 }

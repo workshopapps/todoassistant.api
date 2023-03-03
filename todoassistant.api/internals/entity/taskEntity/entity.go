@@ -94,17 +94,33 @@ type GetPendingTasks struct {
 }
 
 type GetTasksByIdRes struct {
-	TaskId      string     `json:"task_id"`
-	UserId      string     `json:"user_id"`
-	VaId        string     `json:"va_id"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Files       []TaskFile `json:"files"`
-	StartTime   string     `json:"start_time"`
-	EndTime     string     `json:"end_time"`
-	Status      string     `json:"status"`
-	CreatedAt   string     `json:"created_at,omitempty"`
-	UpdatedAt   string     `json:"updated_at,omitempty"`
+	TaskId        string       `json:"task_id"`
+	UserId        string       `json:"user_id"`
+	Title         string       `json:"title"`
+	Description   string       `json:"description"`
+	StartTime     string       `json:"start_time"`
+	EndTime       string       `json:"end_time"`
+	VAOption      string       `json:"va_option"`
+	VaId          string       `json:"va_id"`
+	Repeat        string       `json:"repeat"`
+	Assigned      string       `json:"assigned"`
+	Files         []TaskFile   `json:"files"`
+	ProjectId     string       `json:"project_id"`
+	Notify        bool         `json:"notify"`
+	Status        string       `json:"status"`
+	CreatedAt     string       `json:"created_at"`
+	UpdatedAt     string       `json:"updated_at"`
+	ScheduledDate string       `json:"scheduled_date"`
+	TaskFeatures  TaskFeatures `json:"features"`
+	// VaId        string     `json:"va_id"`
+	// Title       string     `json:"title"`
+	// Description string     `json:"description"`
+	// Files       []TaskFile `json:"files"`
+	// StartTime   string     `json:"start_time"`
+	// EndTime     string     `json:"end_time"`
+	// Status      string     `json:"status"`
+	// CreatedAt   string     `json:"created_at,omitempty"`
+	// UpdatedAt   string     `json:"updated_at,omitempty"`
 }
 
 type SearchTitleReq struct {

@@ -1,6 +1,7 @@
 package tokenservice
 
 import (
+	"errors"
 	"log"
 	"time"
 
@@ -61,6 +62,10 @@ func (t *tokenSrv) ValidateToken(tokenUrl string) (*Token, error) {
 		},
 	)
 
+	if token == nil {
+		return nil, errors.New("check the provided token")
+	}
+
 	claims, ok := token.Claims.(*Token)
 	if !ok {
 		return nil, err
@@ -71,7 +76,6 @@ func (t *tokenSrv) ValidateToken(tokenUrl string) (*Token, error) {
 	}
 
 	return claims, err
-
 }
 
 func NewTokenSrv(secret string) TokenSrv {
