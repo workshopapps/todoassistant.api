@@ -219,5 +219,5 @@ type GetCommentRes struct {
 }
 
 type UpdateTaskStatus struct {
-	Status string `json:"status"`
+	Status string `json:"status" validate:"required,oneof=COMPLETED PENDING"`
 }
