@@ -275,8 +275,7 @@ func (t *taskHandler) EditTaskById(c *gin.Context) {
 		return
 	}
 	//log.Println(req)
-	EditedTask, errRes := t.srv.EditTaskByID(taskId, &req)
-
+	task, errRes := t.srv.EditTaskByID(taskId, &req)
 	if errRes != nil {
 		message := "no task with ID: " + taskId + " found"
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
@@ -284,8 +283,7 @@ func (t *taskHandler) EditTaskById(c *gin.Context) {
 		return
 	}
 
-	rd := ResponseEntity.BuildSuccessResponse(200, "Task status updated successfully", EditedTask, nil)
-	c.JSON(http.StatusOK, rd)
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(200, "Task status updated successfully", task, nil))
 
 }
 

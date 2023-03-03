@@ -949,3 +949,52 @@ func (t *taskSrv) DeleteCommentByID(commentId string) (*ResponseEntity.ResponseM
 	}
 	return ResponseEntity.BuildSuccessResponse(http.StatusOK, "Deleted successfully", nil, nil), nil
 }
+
+// Auxillary function
+func updateTask(req taskEntity.EditTaskReq, task *taskEntity.EditTaskReq) *taskEntity.EditTaskReq {
+	log.Println(task)
+
+	if req.Title != "" && req.Title != task.Title {
+		task.Title = req.Title
+	}
+
+	if req.Description != "" && req.Description != task.Description {
+		task.Description = req.Description
+	}
+
+	// if !req.Notify && req.Notify != task.Notify {
+	// 	task.Description = req.Description
+	// }
+
+	if req.ProjectId != "" && req.ProjectId != task.ProjectId {
+		task.ProjectId = req.ProjectId
+	}
+
+	if req.Description != "" && req.Description != task.Description {
+		task.Description = req.Description
+	}
+
+	if req.Description != "" && req.Description != task.Description {
+		task.Description = req.Description
+	}
+
+	if req.Description != "" && req.Description != task.Description {
+		task.Description = req.Description
+	}
+
+	if req.Description != "" && req.Description != task.Description {
+		task.Description = req.Description
+	}
+
+	if req.Description != "" && req.Description != task.Description {
+		task.Description = req.Description
+	}
+
+	if req.Description != "" && req.Description != task.Description {
+		task.Description = req.Description
+	}
+
+	log.Println(task)
+	return task
+
+}
