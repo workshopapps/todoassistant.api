@@ -13,6 +13,7 @@ type TimeService interface {
 	ScheduleDate() time.Time
 	TimeBefore(time1 time.Time) bool
 	TimeAfter(time1 time.Time) bool
+	ScheduleTimeAfter(time1 time.Time) bool
 }
 
 type timeStruct struct{}
@@ -52,6 +53,10 @@ func (t timeStruct) TimeBefore(time1 time.Time) bool {
 }
 
 func (t timeStruct) TimeAfter(time1 time.Time) bool {
+	return t.CurrentTime().Before(time1)
+}
+
+func (t timeStruct) ScheduleTimeAfter(time1 time.Time) bool {
 	log.Println(t.ScheduleDate())
 	return t.ScheduleDate().Before(time1)
 }

@@ -248,7 +248,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		schedule, err = time.Parse(time.RFC3339, req.ScheduledDate)
 
 		log.Println(err)
-		ok := t.timeSrv.TimeAfter(schedule)
+		ok := t.timeSrv.ScheduleTimeAfter(schedule)
 		if err != nil || !ok {
 			return nil, ResponseEntity.NewCustomServiceError("Invalid schedule date, schedule time cannot be in the past", err)
 		}
