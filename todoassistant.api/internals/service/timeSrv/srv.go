@@ -1,12 +1,16 @@
 package timeSrv
 
-import "time"
+import (
+	"log"
+	"time"
+)
 
 type TimeService interface {
 	CurrentTime() time.Time
 	TimeSince(time2 time.Time) time.Duration
 	CheckFor339Format(time string) error
 	CalcEndTime() time.Time
+	ScheduleDate() time.Time
 	TimeBefore(time1 time.Time) bool
 	TimeAfter(time1 time.Time) bool
 }
@@ -37,12 +41,19 @@ func (t timeStruct) CalcEndTime() time.Time {
 	return endOfDay
 }
 
+func (t timeStruct) ScheduleDate() time.Time {
+	now := t.CurrentTime()
+	schdeduleDate := time.Date(now.Year(), now.Month(), now.Day(), 00, 00, 00, 00, time.Local)
+	return schdeduleDate
+}
+
 func (t timeStruct) TimeBefore(time1 time.Time) bool {
 	return t.CurrentTime().After(time1)
 }
 
 func (t timeStruct) TimeAfter(time1 time.Time) bool {
-	return t.CurrentTime().Before(time1)
+	log.Println(t.ScheduleDate())
+	return t.ScheduleDate().Before(time1)
 }
 
 func NewTimeStruct() TimeService {
