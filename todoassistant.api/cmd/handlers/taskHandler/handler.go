@@ -236,6 +236,8 @@ func (t *taskHandler) UpdateTaskStatus(c *gin.Context) {
 		return
 	}
 
+	log.Println(param, req.Status)
+
 	if param == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest,
 			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "no task id available", nil, nil))
@@ -249,9 +251,8 @@ func (t *taskHandler) UpdateTaskStatus(c *gin.Context) {
 				"Error Setting Task to Done", errRes, nil))
 		return
 	}
-	rd := ResponseEntity.BuildSuccessResponse(http.StatusOK,
-		"Task status updated successfully", nil, nil)
-	c.JSON(http.StatusOK, rd)
+
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Task status updated successfully", nil, nil))
 }
 
 // Update task by id

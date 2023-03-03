@@ -650,10 +650,16 @@ func (t *taskSrv) DeleteAllTask(userId string) (*ResponseEntity.ResponseMessage,
 // @Router	/task/status/{taskId} [post]
 func (t *taskSrv) UpdateTaskStatusByID(taskId string, req *taskEntity.UpdateTaskStatus) (*ResponseEntity.ResponseMessage, *ResponseEntity.ServiceError) {
 	// create context of 1 minute
+	//validating the struct
+	err := t.validationSrv.Validate(req)
+	if err != nil {
+		log.Println(err)
+		return nil, ResponseEntity.NewValidatingError("Bad Data Input")
+	}
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Minute*1)
 	defer cancelFunc()
 
-	err := t.repo.UpdateTaskStatusByID(ctx, taskId, req)
+	err = t.repo.UpdateTaskStatusByID(ctx, taskId, req)
 	if err != nil {
 		log.Println(err)
 		return nil, ResponseEntity.NewInternalServiceError(err)
