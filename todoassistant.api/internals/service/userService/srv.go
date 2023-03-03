@@ -3,9 +3,10 @@ package userService
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"mime/multipart"
 	"strings"
+	"time"
+
 	"test-va/internals/Repository/userRepo"
 	"test-va/internals/entity/ResponseEntity"
 	"test-va/internals/entity/emailEntity"
@@ -18,9 +19,10 @@ import (
 	"test-va/internals/service/timeSrv"
 	tokenservice "test-va/internals/service/tokenService"
 	"test-va/internals/service/validationService"
-	"time"
 
 	"github.com/google/uuid"
+
+	"math/rand"
 )
 
 type UserSrv interface {
@@ -436,7 +438,7 @@ func (u *userSrv) ResetPassword(req *userEntity.ResetPasswordReq) (*userEntity.R
 	// Create token, add to database and then send to user's email address
 	token.UserId = user.UserId
 	token.TokenId = uuid.New().String()
-	token.Token = GenerateToken(4)
+	token.Token = generateToken(4)
 	token.Expiry = time.Now().Add(time.Minute * 30).Format(time.RFC3339)
 
 	err = u.repo.AddToken(&token)
@@ -447,7 +449,7 @@ func (u *userSrv) ResetPassword(req *userEntity.ResetPasswordReq) (*userEntity.R
 	// Send message to users email, if it exists
 	message.EmailAddress = user.Email
 	message.EmailSubject = "Subject: Reset Password Token\n"
-	message.EmailBody = CreateMessageBody(user.FirstName, user.LastName, token.Token)
+	message.EmailBody = createMessageBody(user.FirstName, user.LastName, token.Token)
 
 	// err = u.emailSrv.SendMail(message)
 	// if err != nil {
@@ -460,7 +462,7 @@ func (u *userSrv) ResetPassword(req *userEntity.ResetPasswordReq) (*userEntity.R
 		Data: map[string]string{
 			"email_address": req.Email,
 			"email_subject": "Subject: Request to Reset Password\n",
-			"email_body":    CreateMessageBody(user.FirstName, user.LastName, token.Token),
+			"email_body":    createMessageBody(user.FirstName, user.LastName, token.Token),
 		},
 	}
 
@@ -568,7 +570,7 @@ func (u *userSrv) AssignVAToUser(user_id, va_id string) *ResponseEntity.ServiceE
 }
 
 // Auxillary Function
-func GenerateToken(tokenLength int) string {
+func generateToken(tokenLength int) string {
 	rand.Seed(time.Now().UnixNano())
 	const charset = "0123456789"
 	b := make([]byte, tokenLength)
@@ -578,9 +580,9 @@ func GenerateToken(tokenLength int) string {
 	return string(b)
 }
 
-func CreateMessageBody(firstName, lastName, token string) string {
+func createMessageBody(firstName, lastName, token string) string {
 	subject := fmt.Sprintf("Hi %v %v, \n\n", firstName, lastName)
-	mainBody := fmt.Sprintf("You have requested to reset your password, this is your otp code %v\nBut if you did not request for a change of password, you can ignore this email.\n\nLink expires in 30 minutes!", token)
+	mainBody := fmt.Sprintf("You have requested to reset your password, this is your otp code <b>%v</b>\nBut if you did not request for a change of password, you can ignore this email.\n\nLink expires in 30 minutes!", token)
 
 	message := subject + mainBody
 	return string(message)

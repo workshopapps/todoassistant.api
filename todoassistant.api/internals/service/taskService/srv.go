@@ -243,6 +243,19 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		req.EndTime = t.timeSrv.CalcEndTime().Format(time.RFC3339)
 	}
 
+	var schedule time.Time
+	if req.ScheduledDate != "" {
+		schedule, err = time.Parse(time.RFC3339, req.ScheduledDate)
+
+		log.Println(err)
+		ok := t.timeSrv.TimeAfter(schedule)
+		if err != nil || !ok {
+			return nil, ResponseEntity.NewCustomServiceError("Invalid schedule date, schedule time cannot be in the past", err)
+		}
+
+		req.ScheduledDate = schedule.Format(time.RFC3339)
+	}
+
 	//check if timeDueDate and StartDate is valid
 	err = t.timeSrv.CheckFor339Format(req.EndTime)
 	if err != nil {
@@ -306,22 +319,20 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 	if req.ScheduledDate != "" {
 		features.IsScheduled = true
 	}
-	if req.Status == "EXPIRED" {
-		features.IsExpired = true
-	}
 
 	data := taskEntity.CreateTaskRes{
-		TaskId:       req.TaskId,
-		Title:        req.Title,
-		Description:  req.Description,
-		StartTime:    req.StartTime,
-		EndTime:      req.EndTime,
-		Notify:       req.Notify,
-		VAOption:     req.VAOption,
-		Repeat:       req.Repeat,
-		TaskFeatures: features,
-		CreatedAt:    req.CreatedAt,
-		ProjectId:    req.ProjectId,
+		TaskId:        req.TaskId,
+		Title:         req.Title,
+		Description:   req.Description,
+		StartTime:     req.StartTime,
+		EndTime:       req.EndTime,
+		Notify:        req.Notify,
+		VAOption:      req.VAOption,
+		Repeat:        req.Repeat,
+		TaskFeatures:  features,
+		CreatedAt:     req.CreatedAt,
+		ProjectId:     req.ProjectId,
+		ScheduledDate: req.ScheduledDate,
 	}
 
 	tokens, vaId, username, err := t.nSrv.GetUserVaToken(req.UserId)
@@ -438,7 +449,6 @@ func (t *taskSrv) GetTaskByID(taskId string) (*taskEntity.GetTasksByIdRes, *Resp
 	}
 	log.Println("From getByID", task)
 	return task, nil
-
 }
 
 // Get Expired Tasks godoc

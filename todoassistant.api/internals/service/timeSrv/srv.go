@@ -8,6 +8,7 @@ type TimeService interface {
 	CheckFor339Format(time string) error
 	CalcEndTime() time.Time
 	TimeBefore(time1 time.Time) bool
+	TimeAfter(time1 time.Time) bool
 }
 
 type timeStruct struct{}
@@ -22,12 +23,8 @@ func (t timeStruct) CheckFor339Format(timeStr string) error {
 	return nil
 }
 
-func NewTimeStruct() TimeService {
-	return &timeStruct{}
-}
-
 func (t timeStruct) CurrentTime() time.Time {
-	return time.Now()
+	return time.Now().Local()
 }
 
 func (t timeStruct) TimeSince(time2 time.Time) time.Duration {
@@ -41,5 +38,13 @@ func (t timeStruct) CalcEndTime() time.Time {
 }
 
 func (t timeStruct) TimeBefore(time1 time.Time) bool {
-	return t.CurrentTime().Local().Before(time1)
+	return t.CurrentTime().After(time1)
+}
+
+func (t timeStruct) TimeAfter(time1 time.Time) bool {
+	return t.CurrentTime().Before(time1)
+}
+
+func NewTimeStruct() TimeService {
+	return &timeStruct{}
 }
