@@ -270,16 +270,13 @@ func (t *taskHandler) EditTaskById(c *gin.Context) {
 	err := c.ShouldBind(&req)
 	if err != nil {
 		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Input Request", err, nil))
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Input Request", err, nil))
 		return
 	}
 	//log.Println(req)
 	task, errRes := t.srv.EditTaskByID(taskId, &req)
 	if errRes != nil {
-		message := "no task with ID: " + taskId + " found"
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, message, errRes, nil))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Error when updating task", errRes, nil))
 		return
 	}
 
