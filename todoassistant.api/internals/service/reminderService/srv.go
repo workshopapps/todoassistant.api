@@ -41,9 +41,9 @@ func (r *reminderSrv) SetBiWeeklyReminder(data *taskEntity.CreateTaskReq) error 
 		return err
 	}
 
-	r.cron.Every(14).Weeks().StartAt(dDate).Do(func() error {
+	r.cron.Every(2).Weeks().StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
-		r.repo.SetTaskToExpired(data.TaskId)
+		// r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err
@@ -74,7 +74,7 @@ func (r *reminderSrv) SetYearlyReminder(data *taskEntity.CreateTaskReq) error {
 	}
 	r.cron.Every(12).Months().StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
-		r.repo.SetTaskToExpired(data.TaskId)
+		// r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err
@@ -106,7 +106,7 @@ func (r *reminderSrv) SetMonthlyReminder(data *taskEntity.CreateTaskReq) error {
 	}
 	r.cron.Every(1).Months().StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
-		r.repo.SetTaskToExpired(data.TaskId)
+		// r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err
@@ -135,9 +135,8 @@ func (r *reminderSrv) SetWeeklyReminder(data *taskEntity.CreateTaskReq) error {
 	if err != nil {
 		return err
 	}
-	r.cron.Every(7).Day().StartAt(dDate).Do(func() error {
-		log.Println("setting status to expired")
-		r.repo.SetTaskToExpired(data.TaskId)
+
+	r.cron.Every(1).Week().StartAt(dDate).Do(func() error {
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err
@@ -147,22 +146,21 @@ func (r *reminderSrv) SetWeeklyReminder(data *taskEntity.CreateTaskReq) error {
 		data.EndTime = endDate.AddDate(0, 0, 7).Format(time.RFC3339)
 		data.Status = "PENDING"
 		data.TaskId = uuid.New().String()
-		log.Println(data)
 
 		err = r.repo.CreateNewTask(data)
 		if err != nil {
 			return err
 		}
-		r.cron.StartAsync()
+
 		return nil
 	})
+
 	log.Println("created new eventService.")
+	r.cron.StartAsync()
 	return nil
 }
 
 func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
-	// s := gocron.NewScheduler(time.UTC)
-	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
@@ -172,12 +170,7 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 		return errors.New("invalid Time, try again")
 	}
 
-	r.cron.Every(1).Days().StartAt(dDate).Do(func() error {
-		// log.Println("setting status to expired")
-		// log.Printf("\n")
-		// if err := r.repo.SetTaskToExpired(data.TaskId); err != nil {
-		// 	return err
-		// }
+	r.cron.Every(1).Day().StartAt(dDate).Do(func() error {
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err
@@ -189,7 +182,7 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 		data.Status = "PENDING"
 		data.TaskId = uuid.New().String()
 
-		log.Println(data)
+		// log.Println(data)
 
 		err = r.repo.CreateNewTask(data)
 		if err != nil {
@@ -229,7 +222,7 @@ func (r *reminderSrv) SetReminder(data *taskEntity.CreateTaskReq) error {
 
 	r.cron.Every(1).StartAt(dDate).Do(func() {
 		log.Println("setting status to expired")
-		r.repo.SetTaskToExpired(taskId)
+		// r.repo.SetTaskToExpired(taskId)
 
 		//Send VA Notifications to Firebase
 		vaTokens, vaId, username, err := r.nSrv.GetUserVaToken(data.UserId)

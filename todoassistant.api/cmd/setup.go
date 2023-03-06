@@ -212,7 +212,7 @@ func Setup() {
 	callRepo := mySqlCallRepo.NewSqlCallRepo(conn)
 
 	// cron service
-	s := gocron.NewScheduler(time.UTC)
+	s := gocron.NewScheduler(time.Local)
 
 	reminderSrv := reminderService.NewReminderSrv(s, remindRepo, notificationSrv)
 
@@ -222,7 +222,6 @@ func Setup() {
 	}
 
 	// reminder service and implementation
-
 	s.Every(5).Minutes().Do(func() {
 		log.Println("checking for 5 minutes reminders")
 		reminderSrv.SetReminderEvery5Min()

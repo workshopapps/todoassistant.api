@@ -15,33 +15,27 @@ type sqlRepo struct {
 }
 
 func (s *sqlRepo) CreateNewTask(req *taskEntity.CreateTaskReq) error {
-	stmt := fmt.Sprintf(`INSERT INTO Tasks(
-                  task_id,
-                  user_id,
-                  title,
-                  description,
-                  start_time,
-                  end_time,
-                  created_at,
-                  va_option,
-                  repeat_frequency,
-				  schedule_date
-                  )
-	VALUES ('%v','%v','%v','%v','%v','%v','%v','%v','%v', '%v')
-	`, req.TaskId, req.UserId, req.Title, req.Description, req.StartTime, req.EndTime, req.CreatedAt, req.VAOption, req.Repeat, req.ScheduledDate)
+	stmt := fmt.Sprintf(`INSERT
+		INTO Tasks(
+				task_id,
+				user_id,
+				title,
+				description,
+				start_time,
+				end_time,
+				created_at,
+				va_option,
+				repeat_frequency,
+				notify,
+				project_id,
+				scheduled_date
+			)
+		VALUES ('%v','%v','%v','%v','%v','%v','%v', '%v', '%v',%t, '%v', '%v')`, req.TaskId, req.UserId, req.Title, req.Description,
+		req.StartTime, req.EndTime, req.CreatedAt, req.VAOption, req.Repeat, req.Notify, req.ProjectId, req.ScheduledDate)
 	_, err := s.conn.Exec(stmt)
 	if err != nil {
 		log.Println(stmt)
 		log.Println(err)
-		return err
-	}
-	return nil
-}
-
-func (s *sqlRepo) SetTaskToExpired(id string) error {
-	stmt := fmt.Sprintf(`UPDATE Tasks SET status = 'EXPIRED' WHERE task_id ='%v'`, id)
-	_, err := s.conn.Exec(stmt)
-	if err != nil {
 		return err
 	}
 	return nil
