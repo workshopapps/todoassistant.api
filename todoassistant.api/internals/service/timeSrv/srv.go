@@ -42,18 +42,18 @@ func (t timeStruct) CalcEndTime() time.Time {
 	return endOfDay
 }
 
-func (t timeStruct) ScheduleDate() time.Time {
-	now := t.CurrentTime()
-	schdeduleDate := time.Date(now.Year(), now.Month(), now.Day(), 00, 00, 00, 00, time.Local)
-	return schdeduleDate
-}
-
 func (t timeStruct) TimeBefore(time1 time.Time) bool {
 	return t.CurrentTime().After(time1)
 }
 
 func (t timeStruct) TimeAfter(time1 time.Time) bool {
 	return t.CurrentTime().Before(time1)
+}
+
+func (t timeStruct) ScheduleDate() time.Time {
+	now := t.CurrentTime()
+	schdeduleDate := time.Date(now.Year(), now.Month(), now.Day(), 00, 00, 00, 00, time.Local)
+	return schdeduleDate
 }
 
 func (t timeStruct) ScheduleTimeAfter(time1 time.Time) bool {

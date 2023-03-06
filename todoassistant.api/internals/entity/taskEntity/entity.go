@@ -25,7 +25,7 @@ type CreateTaskReq struct {
 }
 
 type EditTaskReq struct {
-	Title         string `json:"title" validate:"required,min=3"`
+	Title         string `json:"title"`
 	Description   string `json:"description"`
 	Repeat        string `json:"repeat"`
 	Assigned      string `json:"assigned"`
@@ -46,6 +46,7 @@ type EditTaskRes struct {
 	EndTime     string `json:"end_time" validate:"required"`
 	VAOption    string `json:"va_option"`
 	Status      string `json:"status"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type TaskFeatures struct {

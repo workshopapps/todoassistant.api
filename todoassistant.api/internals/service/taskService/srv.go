@@ -230,6 +230,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 
 	//set time
 	req.CreatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
+	req.UpdatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
 	//set id
 	req.TaskId = uuid.New().String()
 	req.Status = "PENDING"
@@ -243,6 +244,17 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		req.EndTime = t.timeSrv.CalcEndTime().Format(time.RFC3339)
 	}
 
+	//check if timeDueDate and StartDate is valid
+	err = t.timeSrv.CheckFor339Format(req.EndTime)
+	if err != nil {
+		return nil, ResponseEntity.NewCustomServiceError("Bad Start-Time Input", err)
+	}
+
+	err = t.timeSrv.CheckFor339Format(req.StartTime)
+	if err != nil {
+		return nil, ResponseEntity.NewCustomServiceError("Bad End-Time Input", err)
+	}
+
 	var schedule time.Time
 	if req.ScheduledDate != "" {
 		schedule, err = time.Parse(time.RFC3339, req.ScheduledDate)
@@ -254,23 +266,13 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		}
 
 		req.ScheduledDate = schedule.Format(time.RFC3339)
+		req.EndTime = req.ScheduledDate
 	}
 
-	//check if timeDueDate and StartDate is valid
-	err = t.timeSrv.CheckFor339Format(req.EndTime)
-	if err != nil {
-		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	}
-
-	err = t.timeSrv.CheckFor339Format(req.StartTime)
-	if err != nil {
-		return nil, ResponseEntity.NewCustomServiceError("Bad Time Input", err)
-	}
 	// create a reminder
 	switch req.Repeat {
 	case "never":
 		err = t.remindSrv.SetReminder(req)
-
 		if err != nil {
 			log.Println(err)
 			return nil, ResponseEntity.NewInternalServiceError(err)
@@ -647,7 +649,7 @@ func (t *taskSrv) DeleteAllTask(userId string) (*ResponseEntity.ResponseMessage,
 // @Failure	404  {object}  ResponseEntity.ServiceError
 // @Failure	500  {object}  ResponseEntity.ServiceError
 // @Security ApiKeyAuth
-// @Router	/task/status/{taskId} [post]
+// @Router	/task/{taskId}/status [post]
 func (t *taskSrv) UpdateTaskStatusByID(taskId string, req *taskEntity.UpdateTaskStatus) (*ResponseEntity.ResponseMessage, *ResponseEntity.ServiceError) {
 	// create context of 1 minute
 	//validating the struct
@@ -683,9 +685,7 @@ func (t *taskSrv) UpdateTaskStatusByID(taskId string, req *taskEntity.UpdateTask
 // @Security ApiKeyAuth
 // @Router	/task/{taskId} [put]
 func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*taskEntity.EditTaskRes, *ResponseEntity.ServiceError) {
-
 	// create context of 1 minute
-
 	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Minute*1)
 	defer cancelFunc()
 
@@ -701,12 +701,14 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 	if task == nil {
 		log.Println("no rows returned")
 	}
+
 	if err != nil {
 		log.Println(err)
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
+
+	req = t.updateTask(req, task)
 	req.UpdatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
-	log.Println(req)
 
 	//check if timeDueDate and StartDate is valid
 	err = t.timeSrv.CheckFor339Format(req.EndTime)
@@ -718,9 +720,20 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 	if err != nil {
 		return nil, ResponseEntity.NewCustomServiceError("Bad Start Time Input", err)
 	}
+
+	var schedule time.Time
+	if req.ScheduledDate != "" {
+		schedule, err = time.Parse(time.RFC3339, req.ScheduledDate)
+
+		ok := t.timeSrv.ScheduleTimeAfter(schedule)
+		if err != nil || !ok {
+			return nil, ResponseEntity.NewCustomServiceError("Invalid schedule date, schedule time cannot be in the past", err)
+		}
+
+		req.ScheduledDate = schedule.Format(time.RFC3339)
+	}
 	//Update Task
 	err = t.repo.EditTaskById(ctx, taskId, req)
-
 	if err != nil {
 		log.Println(err, "error creating data")
 		return nil, ResponseEntity.NewInternalServiceError(err)
@@ -734,6 +747,7 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 		StartTime:   req.StartTime,
 		EndTime:     req.EndTime,
 		Status:      req.Status,
+		UpdatedAt:   req.UpdatedAt,
 	}
 	// updateAt := t.timeSrv.CurrentTime().Format(time.RFC3339)
 	// ndate := &taskEntity.CreateTaskReq{
@@ -951,49 +965,58 @@ func (t *taskSrv) DeleteCommentByID(commentId string) (*ResponseEntity.ResponseM
 }
 
 // Auxillary function
-// func updateTask(req taskEntity.EditTaskReq, task *taskEntity.EditTaskReq) *taskEntity.EditTaskReq {
-// 	log.Println(task)
+func (t *taskSrv) updateTask(req *taskEntity.EditTaskReq, task *taskEntity.GetTasksByIdRes) *taskEntity.EditTaskReq {
+	log.Println(task)
 
-// 	if req.Title != "" && req.Title != task.Title {
-// 		task.Title = req.Title
-// 	}
+	if req.Title != "" && req.Title != task.Title {
+		task.Title = req.Title
+	}
 
-// 	if req.Description != "" && req.Description != task.Description {
-// 		task.Description = req.Description
-// 	}
+	if req.Description != "" && req.Description != task.Description {
+		task.Description = req.Description
+	}
 
-// 	// if !req.Notify && req.Notify != task.Notify {
-// 	// 	task.Description = req.Description
-// 	// }
+	if !req.Notify && req.Notify != task.Notify {
+		task.Notify = req.Notify
+	}
 
-// 	if req.ProjectId != "" && req.ProjectId != task.ProjectId {
-// 		task.ProjectId = req.ProjectId
-// 	}
+	if req.Status != "" && req.Status != task.Status {
+		task.Status = req.Status
+	}
 
-// 	if req.Description != "" && req.Description != task.Description {
-// 		task.Description = req.Description
-// 	}
+	if req.Assigned != "" && req.Assigned != task.Assigned {
+		task.Assigned = req.Assigned
+	}
 
-// 	if req.Description != "" && req.Description != task.Description {
-// 		task.Description = req.Description
-// 	}
+	if req.Repeat != "" && req.Repeat != task.Repeat {
+		task.Repeat = req.Repeat
+	}
 
-// 	if req.Description != "" && req.Description != task.Description {
-// 		task.Description = req.Description
-// 	}
+	if req.ProjectId != "" && req.ProjectId != task.ProjectId {
+		task.ProjectId = req.ProjectId
+	}
 
-// 	if req.Description != "" && req.Description != task.Description {
-// 		task.Description = req.Description
-// 	}
+	if req.Assigned != "" && req.Assigned != task.Assigned {
+		task.Assigned = req.Assigned
+	}
 
-// 	if req.Description != "" && req.Description != task.Description {
-// 		task.Description = req.Description
-// 	}
+	if req.ScheduledDate != "" && req.ScheduledDate != task.ScheduledDate {
+		log.Println(req.ScheduledDate)
+		task.ScheduledDate = req.ScheduledDate
+	}
 
-// 	if req.Description != "" && req.Description != task.Description {
-// 		task.Description = req.Description
-// 	}
-
-// 	log.Println(task)
-// 	return task
-// }
+	log.Println(task)
+	return &taskEntity.EditTaskReq{
+		Title:         task.Title,
+		Description:   task.Description,
+		Notify:        task.Notify,
+		Status:        task.Status,
+		Repeat:        task.Repeat,
+		Assigned:      task.Assigned,
+		StartTime:     task.StartTime,
+		EndTime:       task.EndTime,
+		ProjectId:     task.ProjectId,
+		UpdatedAt:     task.UpdatedAt,
+		ScheduledDate: task.ScheduledDate,
+	}
+}

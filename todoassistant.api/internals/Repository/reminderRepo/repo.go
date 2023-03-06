@@ -7,7 +7,7 @@ import (
 
 type ReminderRepository interface {
 	// Needed
-	SetTaskToExpired(id string) error
+	// SetTaskToExpired(id string) error
 	CreateNewTask(req *taskEntity.CreateTaskReq) error
 	GetAllUsersPendingTasks() ([]reminderEntity.GetPendingTasks, error)
 }

@@ -230,27 +230,27 @@ func (s *sqlRepo) Persist(ctx context.Context, req *taskEntity.CreateTaskReq) er
 	defer func() {
 		if err != nil {
 			tx.Rollback()
-		} else {
-			tx.Commit()
 		}
+
+		tx.Commit()
 	}()
 	log.Println("create task req", req)
 
 	stmt := fmt.Sprintf(`INSERT
 		INTO Tasks(
-					task_id,
-                  user_id,
-                  title,
-                  description,
-                  start_time,
-                  end_time,
-                  created_at,
-                  va_option,
-                  repeat_frequency,
-				  notify,
-				  project_id,
-				  scheduled_date
-				   )
+				task_id,
+				user_id,
+				title,
+				description,
+				start_time,
+				end_time,
+				created_at,
+				va_option,
+				repeat_frequency,
+				notify,
+				project_id,
+				scheduled_date
+			)
 		VALUES ('%v','%v','%v','%v','%v','%v','%v', '%v', '%v',%t, '%v', '%v')`, req.TaskId, req.UserId, req.Title, req.Description,
 		req.StartTime, req.EndTime, req.CreatedAt, req.VAOption, req.Repeat, req.Notify, req.ProjectId, req.ScheduledDate)
 
@@ -262,12 +262,12 @@ func (s *sqlRepo) Persist(ctx context.Context, req *taskEntity.CreateTaskReq) er
 
 	for _, file := range req.Files {
 		stmt2 := fmt.Sprintf(`INSERT
-		INTO Taskfiles(
-		               task_id,
-		               file_link,
-		               file_type
-		               )
-		VALUES ('%v', '%v', '%v')`, req.TaskId, file.FileLink, file.FileType)
+								INTO Taskfiles(
+								task_id,	
+								file_link,
+								file_type
+							)
+							VALUES ('%v', '%v', '%v')`, req.TaskId, file.FileLink, file.FileType)
 		_, err = tx.ExecContext(ctx, stmt2)
 		if err != nil {
 			log.Println("err", err)
@@ -553,7 +553,6 @@ func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity
 		}
 
 		if tim.TimeBefore(end) && singleTask.Status == "PENDING" {
-			log.Println(tim.TimeBefore(end))
 			features.IsExpired = true
 		}
 
@@ -622,20 +621,23 @@ func (s *sqlRepo) EditTaskById(ctx context.Context, taskId string, req *taskEnti
 	if req.Notify {
 		notifyInt = 1
 	}
+
+	stmt := fmt.Sprintf(`UPDATE Tasks SET
+							title = '%s',
+							description = '%s',
+							status = '%s',
+							start_time = '%s',
+							repeat_frequency = '%s',
+							end_time = '%s',
+							updated_at = '%s',
+							notify = '%d',
+							project_id ='%s',
+							scheduled_date= '%s'
+							WHERE task_id = '%s'
+						`, req.Title, req.Description, req.Status, req.StartTime, req.Repeat, req.EndTime, req.UpdatedAt, notifyInt, req.ProjectId, req.ScheduledDate, taskId)
+
 	log.Println(req.ProjectId)
-	_, err := s.conn.ExecContext(ctx, fmt.Sprintf(`UPDATE Tasks SET
-                 title = '%s',
-                 description = '%s',
-				 status = '%s',
-				 start_time = '%s',
-				 repeat_frequency = '%s',
-                 end_time = '%s',
-                 updated_at = '%s',
-                 notify = '%d',
-				 project_id ='%s',
-                 scheduled_date= '%s'
-             WHERE task_id = '%s'
-            `, req.Title, req.Description, req.Status, req.StartTime, req.Repeat, req.EndTime, req.UpdatedAt, notifyInt, req.ProjectId, req.ScheduledDate, taskId))
+	_, err := s.conn.ExecContext(ctx, stmt)
 	if err != nil {
 		log.Fatal(err)
 	}
