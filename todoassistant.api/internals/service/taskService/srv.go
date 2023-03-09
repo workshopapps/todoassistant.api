@@ -266,7 +266,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		}
 
 		req.ScheduledDate = schedule.Format(time.RFC3339)
-		req.EndTime = req.ScheduledDate
+		req.EndTime = t.timeSrv.CalcScheduleEndTime(schedule)
 	}
 
 	// create a reminder
