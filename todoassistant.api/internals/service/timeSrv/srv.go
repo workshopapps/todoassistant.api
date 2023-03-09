@@ -38,7 +38,7 @@ func (t timeStruct) TimeSince(time2 time.Time) time.Duration {
 }
 
 func (t timeStruct) CalcEndTime() time.Time {
-	now := time.Now()
+	now := time.Now().Local()
 	endOfDay := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 	return endOfDay
 }
