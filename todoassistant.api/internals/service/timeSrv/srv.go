@@ -10,6 +10,7 @@ type TimeService interface {
 	TimeSince(time2 time.Time) time.Duration
 	CheckFor339Format(time string) error
 	CalcEndTime() time.Time
+	CalcScheduleEndTime(schedule time.Time) string
 	ScheduleDate() time.Time
 	TimeBefore(time1 time.Time) bool
 	TimeAfter(time1 time.Time) bool
@@ -40,6 +41,11 @@ func (t timeStruct) CalcEndTime() time.Time {
 	now := time.Now()
 	endOfDay := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 	return endOfDay
+}
+
+func (t timeStruct) CalcScheduleEndTime(schedule time.Time) string {
+	endOfDay := time.Date(schedule.Year(), schedule.Month(), schedule.Day(), 23, 59, 59, 0, time.Local)
+	return endOfDay.Format(time.RFC3339)
 }
 
 func (t timeStruct) TimeBefore(time1 time.Time) bool {
