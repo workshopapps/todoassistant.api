@@ -237,11 +237,11 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 
 	//set start time and endtime
 	if req.StartTime == "" {
-		req.StartTime = t.timeSrv.CurrentTime().Format(time.RFC3339)
+		req.StartTime = t.timeSrv.CurrentTimeString()
 	}
 
 	if req.EndTime == "" {
-		req.EndTime = t.timeSrv.CalcEndTime().Format(time.RFC3339)
+		req.EndTime = t.timeSrv.CalcEndTimeString()
 	}
 
 	//check if timeDueDate and StartDate is valid
@@ -699,7 +699,7 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 	// Get task by ID
 	task, err := t.repo.GetTaskByID(ctx, taskId)
 	if task == nil {
-		log.Println("no rows returned")
+		return nil, ResponseEntity.NewInternalServiceError("No task with that ID")
 	}
 
 	if err != nil {
@@ -707,48 +707,141 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
 
-	req = t.updateTask(req, task)
-	req.UpdatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
+	req1 := t.updateTask(req, task)
+	req1.UpdatedAt = t.timeSrv.CurrentTimeString()
 
 	//check if timeDueDate and StartDate is valid
-	err = t.timeSrv.CheckFor339Format(req.EndTime)
+	err = t.timeSrv.CheckFor339Format(req1.EndTime)
 	if err != nil {
 		return nil, ResponseEntity.NewCustomServiceError("Bad End Time Input", err)
 	}
 
-	err = t.timeSrv.CheckFor339Format(req.StartTime)
+	err = t.timeSrv.CheckFor339Format(req1.StartTime)
 	if err != nil {
 		return nil, ResponseEntity.NewCustomServiceError("Bad Start Time Input", err)
 	}
 
 	var schedule time.Time
 	if req.ScheduledDate != "" {
-		schedule, err = time.Parse(time.RFC3339, req.ScheduledDate)
+		schedule, err = time.Parse(time.RFC3339, req1.ScheduledDate)
 
 		ok := t.timeSrv.ScheduleTimeAfter(schedule)
 		if err != nil || !ok {
 			return nil, ResponseEntity.NewCustomServiceError("Invalid schedule date, schedule time cannot be in the past", err)
 		}
 
-		req.ScheduledDate = schedule.Format(time.RFC3339)
+		req1.ScheduledDate = schedule.Format(time.RFC3339)
+		req1.EndTime = t.timeSrv.CalcScheduleEndTime(schedule)
 	}
-	//Update Task
-	err = t.repo.EditTaskById(ctx, taskId, req)
+
+	if req1.Repeat != req.Repeat {
+		switch req1.Repeat {
+		case "never":
+			err = t.remindSrv.SetReminder(req1)
+			if err != nil {
+				log.Println(err)
+				return nil, ResponseEntity.NewInternalServiceError(err)
+			}
+		case "daily":
+			err = t.remindSrv.SetDailyReminder(req1)
+			if err != nil {
+				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Daily Input")
+			}
+		case "weekly":
+			err = t.remindSrv.SetWeeklyReminder(req1)
+			if err != nil {
+				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Weekly Input")
+			}
+		case "bi-weekly":
+			err = t.remindSrv.SetBiWeeklyReminder(req1)
+			if err != nil {
+				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Bi Weekly Input")
+			}
+		case "monthly":
+			err = t.remindSrv.SetMonthlyReminder(req1)
+			if err != nil {
+				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Monthly Input")
+			}
+		case "yearly":
+			err = t.remindSrv.SetYearlyReminder(req1)
+			if err != nil {
+				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Yearly Input")
+			}
+		default:
+			req.Repeat = "never"
+			// err = t.remindSrv.SetReminder(req)
+
+			// if err != nil {
+			// 	log.Println("From setting reminder",err)
+			// 	return nil, ResponseEntity.NewInternalServiceError(err)
+			// }
+
+		}
+	}
+
+	var features taskEntity.TaskFeatures
+	if req.Assigned != "" {
+		features.IsAssigned = true
+	}
+	if req.ScheduledDate != "" {
+		features.IsScheduled = true
+	}
+
+	// Returning Data and Edit Data
+	data := taskEntity.EditTaskReq{
+		Title:         req1.Title,
+		Description:   req1.Description,
+		StartTime:     req1.StartTime,
+		EndTime:       req1.EndTime,
+		Notify:        req1.Notify,
+		Repeat:        req1.Repeat,
+		ProjectId:     req1.ProjectId,
+		ScheduledDate: req1.ScheduledDate,
+		Files:         req1.Files,
+		Assigned:      req1.Assigned,
+		UpdatedAt:     req1.UpdatedAt,
+		Status:        req1.Status,
+	}
+
+	tokens, vaId, username, err := t.nSrv.GetUserVaToken(req1.UserId)
 	if err != nil {
-		log.Println(err, "error creating data")
+		fmt.Println(err)
+	}
+	fmt.Println(vaId)
+
+	if vaId == "" {
+		log.Println(err)
+		if strings.Contains(err.Error(), `"virtual_Assistant_id": converting NULL to string is unsupported`) {
+			return nil, ResponseEntity.NewInternalServiceError("YOU DON'T HAVE A VA. GET YA MONEY UP. BROKE BOY.")
+		}
+
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
 
-	//Returning Data
-	data := taskEntity.EditTaskRes{
-		Title:       req.Title,
-		Description: req.Description,
-		Repeat:      req.Repeat,
-		StartTime:   req.StartTime,
-		EndTime:     req.EndTime,
-		Status:      req.Status,
-		UpdatedAt:   req.UpdatedAt,
+	body := []notificationEntity.NotificationBody{
+		{
+			Content: fmt.Sprintf("%s Just Updated a Task", username),
+			Color:   notificationEntity.CreatedColor,
+			Time:    t.timeSrv.CurrentTimeString(),
+		},
 	}
+
+	if len(tokens) > 0 {
+		err := t.nSrv.SendBatchNotifications(tokens, "Task Updated", body, data)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("User Has Not VA or VA Has Not Registered For Notifications")
+	}
+
+	//Update Task
+	err = t.repo.EditTaskById(ctx, taskId, &data)
+	if err != nil {
+		log.Println(err, "error updating data")
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+
 	// updateAt := t.timeSrv.CurrentTime().Format(time.RFC3339)
 	// ndate := &taskEntity.CreateTaskReq{
 	// 	TaskId:      taskId,
@@ -831,7 +924,16 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 	// }
 	log.Println("update complete")
 
-	return &data, nil
+	return &taskEntity.EditTaskRes{
+		Title:        data.Title,
+		Description:  data.Description,
+		Repeat:       data.Repeat,
+		StartTime:    data.StartTime,
+		EndTime:      data.EndTime,
+		Status:       data.Status,
+		UpdatedAt:    data.UpdatedAt,
+		TaskFeatures: features,
+	}, nil
 }
 
 // Create a comment
@@ -965,7 +1067,7 @@ func (t *taskSrv) DeleteCommentByID(commentId string) (*ResponseEntity.ResponseM
 }
 
 // Auxillary function
-func (t *taskSrv) updateTask(req *taskEntity.EditTaskReq, task *taskEntity.GetTasksByIdRes) *taskEntity.EditTaskReq {
+func (t *taskSrv) updateTask(req *taskEntity.EditTaskReq, task *taskEntity.GetTasksByIdRes) *taskEntity.CreateTaskReq {
 	log.Println(task)
 
 	if req.Title != "" && req.Title != task.Title {
@@ -1000,19 +1102,31 @@ func (t *taskSrv) updateTask(req *taskEntity.EditTaskReq, task *taskEntity.GetTa
 		task.Assigned = req.Assigned
 	}
 
+	if req.StartTime == "" {
+		task.StartTime = t.timeSrv.CurrentTimeString()
+	}
+
+	if req.EndTime == "" {
+		task.EndTime = t.timeSrv.CalcEndTimeString()
+	}
+
 	if req.ScheduledDate != "" && req.ScheduledDate != task.ScheduledDate {
 		log.Println(req.ScheduledDate)
 		task.ScheduledDate = req.ScheduledDate
 	}
 
 	log.Println(task)
-	return &taskEntity.EditTaskReq{
+	return &taskEntity.CreateTaskReq{
+		TaskId:        task.TaskId,
+		UserId:        task.UserId,
 		Title:         task.Title,
 		Description:   task.Description,
 		Notify:        task.Notify,
 		Status:        task.Status,
 		Repeat:        task.Repeat,
 		Assigned:      task.Assigned,
+		Files:         task.Files,
+		VAOption:      task.VAOption,
 		StartTime:     task.StartTime,
 		EndTime:       task.EndTime,
 		ProjectId:     task.ProjectId,

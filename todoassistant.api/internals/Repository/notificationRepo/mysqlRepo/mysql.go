@@ -12,18 +12,18 @@ type mySql struct {
 	conn *sql.DB
 }
 
-func (m *mySql) GetTaskDetailsWhenDue(userId string) (*notificationEntity.GetExpiredTasksWithDeviceId, error) {
-	fmt.Sprintf(`SELECT 
-    task_id,
-	user_id, 
-	title,
-	description,
-	end_time,
-	device_id
-	FROM Tasks join Notification_Tokens N on Tasks.user_id = N.user_id and N.user_id = '%s'
-`, userId)
-	panic("Impl me")
-}
+// func (m *mySql) GetTaskDetailsWhenDue(userId string) (*notificationEntity.GetExpiredTasksWithDeviceId, error) {
+// 	fmt.Sprintf(`SELECT
+//     task_id,
+// 	user_id,
+// 	title,
+// 	description,
+// 	end_time,
+// 	device_id
+// 	FROM Tasks join Notification_Tokens N on Tasks.user_id = N.user_id and N.user_id = '%s'
+// `, userId)
+// 	panic("Impl me")
+// }
 
 func (m *mySql) Persist(req *notificationEntity.CreateNotification) error {
 	stmt := fmt.Sprintf(` 
@@ -86,13 +86,13 @@ func (n *mySql) GetUserVaToken(userId string) ([]string, string, string, error) 
 	var deviceIds []string
 	query, err := n.conn.Query(stmt)
 	if err != nil {
-		return nil, "", "", err
+		return nil, vaId, "", err
 	}
 	for query.Next() {
 		var deviceId string
 		err = query.Scan(&deviceId)
 		if err != nil {
-			return nil, "", "", err
+			return nil, vaId, "", err
 		}
 		deviceIds = append(deviceIds, deviceId)
 	}
@@ -104,6 +104,7 @@ func (n *mySql) GetUserToken(userId string) ([]string, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
+
 	stmt := fmt.Sprintf(`
 		SELECT device_id
 		FROM Notification_Tokens 

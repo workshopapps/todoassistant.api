@@ -25,28 +25,29 @@ type CreateTaskReq struct {
 }
 
 type EditTaskReq struct {
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	Repeat        string `json:"repeat"`
-	Assigned      string `json:"assigned"`
-	StartTime     string `json:"start_time"`
-	EndTime       string `json:"end_time"`
-	ProjectId     string `json:"project_id"`
-	Notify        bool   `json:"notify"`
-	Status        string `json:"status"`
-	UpdatedAt     string `json:"updated_at"`
-	ScheduledDate string `json:"scheduled_date"`
+	Title         string     `json:"title"`
+	Description   string     `json:"description"`
+	Repeat        string     `json:"repeat"`
+	Assigned      string     `json:"assigned"`
+	Files         []TaskFile `json:"files"`
+	StartTime     string     `json:"start_time"`
+	EndTime       string     `json:"end_time"`
+	ProjectId     string     `json:"project_id"`
+	Notify        bool       `json:"notify"`
+	Status        string     `json:"status"`
+	UpdatedAt     string     `json:"updated_at"`
+	ScheduledDate string     `json:"scheduled_date"`
 }
 
 type EditTaskRes struct {
-	Title       string `json:"title" validate:"required,min=3"`
-	Description string `json:"description" validate:"required,min=3"`
-	Repeat      string `json:"repeat"`
-	StartTime   string `json:"start_time" validate:"required"`
-	EndTime     string `json:"end_time" validate:"required"`
-	VAOption    string `json:"va_option"`
-	Status      string `json:"status"`
-	UpdatedAt   string `json:"updated_at"`
+	Title        string       `json:"title" validate:"required,min=3"`
+	Description  string       `json:"description" validate:"required,min=3"`
+	Repeat       string       `json:"repeat"`
+	StartTime    string       `json:"start_time" validate:"required"`
+	EndTime      string       `json:"end_time" validate:"required"`
+	Status       string       `json:"status"`
+	UpdatedAt    string       `json:"updated_at"`
+	TaskFeatures TaskFeatures `json:"features"`
 }
 
 type TaskFeatures struct {
