@@ -6,25 +6,26 @@ import (
 	"time"
 )
 
-func Test_timeStruct_CalcEndTime(t *testing.T) {
+func Test_TimeStruct_CalcEndTime(t *testing.T) {
 	tests := []struct {
 		name string
 		tr   timeStruct
 		want time.Time
 	}{
 		// TODO: Add test cases.
+		{"First test", timeStruct{}, NewTimeStruct().CalcEndTime()},
+		{"Second test", timeStruct{}, NewTimeStruct().ScheduleDate()},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tr := timeStruct{}
-			if got := tr.CalcEndTime(); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.tr.CalcEndTime(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("timeStruct.CalcEndTime() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_timeStruct_TimeBefore(t *testing.T) {
+func Test_TimeStruct_TimeBefore(t *testing.T) {
 	type args struct {
 		time1 time.Time
 	}

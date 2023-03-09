@@ -30,15 +30,16 @@ func (s *sqlRepo) AssignTaskToVa(ctx context.Context, vaId, taskId string) error
 func (s *sqlRepo) GetVADetails(ctx context.Context, userId string) (string, error) {
 	var vaId *string
 	stmt := fmt.Sprintf(`
-SELECT
-	virtual_Assistant_id from Users
-WHERE user_id = '%v'
-`, userId)
+		SELECT
+			virtual_Assistant_id from Users
+		WHERE user_id = '%v'
+		`, userId)
 	row := s.conn.QueryRowContext(ctx, stmt)
 	err := row.Scan(&vaId)
 	if err != nil {
 		return "", err
 	}
+
 	return *vaId, nil
 }
 
