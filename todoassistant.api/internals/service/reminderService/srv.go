@@ -35,13 +35,14 @@ type reminderSrv struct {
 }
 
 func (r *reminderSrv) SetBiWeeklyReminder(data *taskEntity.CreateTaskReq) error {
+	r.cron.RemoveByTag(data.TaskId)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
 
-	r.cron.Every(2).Weeks().StartAt(dDate).Do(func() error {
+	r.cron.Every(2).Weeks().Tag(data.TaskId).StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
 		// r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
@@ -67,12 +68,13 @@ func (r *reminderSrv) SetBiWeeklyReminder(data *taskEntity.CreateTaskReq) error 
 }
 
 func (r *reminderSrv) SetYearlyReminder(data *taskEntity.CreateTaskReq) error {
+	r.cron.RemoveByTag(data.TaskId)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
-	r.cron.Every(12).Months().StartAt(dDate).Do(func() error {
+	r.cron.Every(12).Months().Tag(data.TaskId).StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
 		// r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
@@ -98,13 +100,13 @@ func (r *reminderSrv) SetYearlyReminder(data *taskEntity.CreateTaskReq) error {
 }
 
 func (r *reminderSrv) SetMonthlyReminder(data *taskEntity.CreateTaskReq) error {
-	// // s := gocron.NewScheduler(time.UTC)
-	// get string of date and convert it to Time.Time
+	r.cron.RemoveByTag(data.TaskId)
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
-	r.cron.Every(1).Months().StartAt(dDate).Do(func() error {
+
+	r.cron.Every(1).Months().Tag(data.TaskId).StartAt(dDate).Do(func() error {
 		log.Println("setting status to expired")
 		// r.repo.SetTaskToExpired(data.TaskId)
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
@@ -129,14 +131,14 @@ func (r *reminderSrv) SetMonthlyReminder(data *taskEntity.CreateTaskReq) error {
 }
 
 func (r *reminderSrv) SetWeeklyReminder(data *taskEntity.CreateTaskReq) error {
-	// // s := gocron.NewScheduler(time.UTC)
+	r.cron.RemoveByTag(data.TaskId)
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
 	}
 
-	r.cron.Every(1).Week().StartAt(dDate).Do(func() error {
+	r.cron.Every(1).Week().Tag(data.TaskId).StartAt(dDate).Do(func() error {
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err
@@ -161,6 +163,7 @@ func (r *reminderSrv) SetWeeklyReminder(data *taskEntity.CreateTaskReq) error {
 }
 
 func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
+	r.cron.RemoveByTag(data.TaskId)
 	dDate, err := time.Parse(time.RFC3339, data.EndTime)
 	if err != nil {
 		return err
@@ -170,7 +173,7 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 		return errors.New("invalid Time, try again")
 	}
 
-	r.cron.Every(1).Day().StartAt(dDate).Do(func() error {
+	r.cron.Every(1).Day().Tag(data.TaskId).StartAt(dDate).Do(func() error {
 		endDate, err := time.Parse(time.RFC3339, data.EndTime)
 		if err != nil {
 			return err
