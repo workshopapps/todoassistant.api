@@ -39,7 +39,7 @@ func (p *projectSrv) PersistProject(req *projectEntity.CreateProjectReq) (*proje
 		return nil, ResponseEntity.NewValidatingError("Bad Data Input")
 	}
 	//set created time
-	req.CreatedAt = p.timeSrv.CurrentTime().Format(time.RFC3339)
+	req.CreatedAt = p.timeSrv.CurrentTimeString() //.Format(time.RFC3339)
 	req.ProjectId = uuid.New().String()
 
 	err = p.repo.PersistProject(ctx, req)

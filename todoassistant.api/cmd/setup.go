@@ -212,7 +212,7 @@ func Setup() {
 	callRepo := mySqlCallRepo.NewSqlCallRepo(conn)
 
 	// cron service
-	s := gocron.NewScheduler(time.Local)
+	s := gocron.NewScheduler(time.UTC)
 
 	reminderSrv := reminderService.NewReminderSrv(s, remindRepo, notificationSrv)
 

@@ -169,7 +169,7 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 		return err
 	}
 
-	if dDate.Before(time.Now()) {
+	if dDate.Before(time.Now().Local()) {
 		return errors.New("invalid Time, try again")
 	}
 
@@ -182,6 +182,7 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 		data.StartTime = data.EndTime
 		data.UpdatedAt = data.EndTime
 		data.EndTime = endDate.AddDate(0, 0, 1).Format(time.RFC3339)
+		data.CreatedAt = time.Now().Local().Format(time.RFC3339)
 		data.Status = "PENDING"
 		data.TaskId = uuid.New().String()
 
@@ -214,19 +215,17 @@ func (r *reminderSrv) SetDailyReminder(data *taskEntity.CreateTaskReq) error {
 }
 
 func (r *reminderSrv) SetReminder(data *taskEntity.CreateTaskReq) error {
+	r.cron.RemoveByTag(data.TaskId)
 	dueDate := data.EndTime
 	taskId := data.TaskId
-	// s := gocron.NewScheduler(time.UTC)
+
 	// get string of date and convert it to Time.Time
 	dDate, err := time.Parse(time.RFC3339, dueDate)
 	if err != nil {
 		return err
 	}
 
-	r.cron.Every(1).StartAt(dDate).Do(func() {
-		log.Println("setting status to expired")
-		// r.repo.SetTaskToExpired(taskId)
-
+	r.cron.Every(1).Tag(data.TaskId).StartAt(dDate).Do(func() {
 		//Send VA Notifications to Firebase
 		vaTokens, vaId, username, err := r.nSrv.GetUserVaToken(data.UserId)
 		if err != nil {
@@ -265,7 +264,7 @@ func (r *reminderSrv) SetReminder(data *taskEntity.CreateTaskReq) error {
 			{
 				Content: "This Task Has Expired",
 				Color:   notificationEntity.ExpiredColor,
-				Time:    time.Now().String(),
+				Time:    time.Now().Local().Format(time.RFC3339),
 			},
 		}
 
