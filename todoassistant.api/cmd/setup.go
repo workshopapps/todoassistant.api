@@ -212,7 +212,7 @@ func Setup() {
 	callRepo := mySqlCallRepo.NewSqlCallRepo(conn)
 
 	// cron service
-	s := gocron.NewScheduler(time.Local)
+	s := gocron.NewScheduler(time.UTC)
 
 	reminderSrv := reminderService.NewReminderSrv(s, remindRepo, notificationSrv)
 
@@ -267,7 +267,7 @@ func Setup() {
 
 	// social login service
 
-	loginSrv := socialLoginService.NewLoginSrv(userRepo, timeSrv)
+	loginSrv := socialLoginService.NewLoginSrv(userRepo, timeSrv, srv)
 
 	// va service
 	vaSrv := vaService.NewVaService(vaRepo, validationSrv, timeSrv, cryptoSrv)
