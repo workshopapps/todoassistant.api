@@ -18,8 +18,9 @@ type LoginSrv interface {
 }
 
 type loginSrv struct {
-	repo    userRepo.UserRepository
-	timeSrv timeSrv.TimeService
+	repo     userRepo.UserRepository
+	timeSrv  timeSrv.TimeService
+	tokenSrv tokenservice.TokenSrv
 }
 
 // Google login godoc
@@ -34,8 +35,8 @@ type loginSrv struct {
 // @Failure	404  {object}  ResponseEntity.ServiceError
 // @Failure	500  {object}  ResponseEntity.ServiceError
 // @Router	/googlelogin [post]
-func (t *loginSrv) LoginResponse(req *userEntity.GoogleLoginReq) (*userEntity.LoginRes, *ResponseEntity.ServiceError) {
-	user, _ := t.repo.GetByEmail(req.Email)
+func (l *loginSrv) LoginResponse(req *userEntity.GoogleLoginReq) (*userEntity.LoginRes, *ResponseEntity.ServiceError) {
+	user, _ := l.repo.GetByEmail(req.Email)
 	if user == nil {
 
 		resData := &userEntity.CreateUserReq{
@@ -44,20 +45,20 @@ func (t *loginSrv) LoginResponse(req *userEntity.GoogleLoginReq) (*userEntity.Lo
 			LastName:      req.LastName,
 			Email:         req.Email,
 			AccountStatus: "ACTIVE",
-			DateCreated:   t.timeSrv.CurrentTime().Format(time.RFC3339),
+			DateCreated:   l.timeSrv.CurrentTime().Format(time.RFC3339),
 		}
 
-		err := t.repo.Persist(resData)
+		err := l.repo.Persist(resData)
 
 		if err != nil {
 			return nil, ResponseEntity.NewInternalServiceError(err)
 		}
 	}
 
-	user, _ = t.repo.GetByEmail(req.Email)
-	tokenSrv := tokenservice.NewTokenSrv("fvmvmvmvf")
+	user, _ = l.repo.GetByEmail(req.Email)
+	// tokenSrv := tokenservice.NewTokenSrv("fvmvmvmvf")
 
-	accessToken, refreshToken, err := tokenSrv.CreateToken(user.Email, "user", user.UserId)
+	accessToken, refreshToken, err := l.tokenSrv.CreateToken(user.Email, "user", user.UserId)
 
 	if err != nil {
 		return nil, ResponseEntity.NewInternalServiceError(err)
@@ -89,8 +90,8 @@ func (t *loginSrv) LoginResponse(req *userEntity.GoogleLoginReq) (*userEntity.Lo
 // @Failure	404  {object}  ResponseEntity.ServiceError
 // @Failure	500  {object}  ResponseEntity.ServiceError
 // @Router	/facebooklogin [post]
-func (t *loginSrv) FacebookLoginResponse(req *userEntity.FacebookLoginReq) (*userEntity.LoginRes, *ResponseEntity.ServiceError) {
-	user, _ := t.repo.GetByEmail(req.Email)
+func (l *loginSrv) FacebookLoginResponse(req *userEntity.FacebookLoginReq) (*userEntity.LoginRes, *ResponseEntity.ServiceError) {
+	user, _ := l.repo.GetByEmail(req.Email)
 	name := strings.Split(req.Name, " ")
 
 	firstName := name[0]
@@ -103,20 +104,20 @@ func (t *loginSrv) FacebookLoginResponse(req *userEntity.FacebookLoginReq) (*use
 			LastName:      lastName,
 			Email:         req.Email,
 			AccountStatus: "ACTIVE",
-			DateCreated:   t.timeSrv.CurrentTime().Format(time.RFC3339),
+			DateCreated:   l.timeSrv.CurrentTime().Format(time.RFC3339),
 		}
 
-		err := t.repo.Persist(resData)
+		err := l.repo.Persist(resData)
 
 		if err != nil {
 			return nil, ResponseEntity.NewInternalServiceError(err)
 		}
 	}
 
-	user, _ = t.repo.GetByEmail(req.Email)
-	tokenSrv := tokenservice.NewTokenSrv("fvmvmvmvf")
+	user, _ = l.repo.GetByEmail(req.Email)
+	// tokenSrv := tokenservice.NewTokenSrv("fvmvmvmvf")
 
-	accessToken, refreshToken, err := tokenSrv.CreateToken(user.Email, "user", user.UserId)
+	accessToken, refreshToken, err := l.tokenSrv.CreateToken(user.Email, "user", user.UserId)
 
 	if err != nil {
 		return nil, ResponseEntity.NewInternalServiceError(err)
@@ -136,6 +137,6 @@ func (t *loginSrv) FacebookLoginResponse(req *userEntity.FacebookLoginReq) (*use
 	return loginUser, nil
 }
 
-func NewLoginSrv(repo userRepo.UserRepository, timeSrv timeSrv.TimeService) LoginSrv {
-	return &loginSrv{repo, timeSrv}
+func NewLoginSrv(repo userRepo.UserRepository, timeSrv timeSrv.TimeService, tokenSrv tokenservice.TokenSrv) LoginSrv {
+	return &loginSrv{repo, timeSrv, tokenSrv}
 }
