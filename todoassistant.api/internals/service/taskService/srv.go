@@ -224,13 +224,13 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 
 	err := t.validationSrv.Validate(req)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
 		return nil, ResponseEntity.NewValidatingError("Bad Data Input")
 	}
 
 	//set time
-	req.CreatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
-	req.UpdatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
+	req.CreatedAt = t.timeSrv.CurrentTimeString()
+	req.UpdatedAt = t.timeSrv.CurrentTimeString()
 	//set id
 	req.TaskId = uuid.New().String()
 	req.Status = "PENDING"
@@ -245,28 +245,31 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 	}
 
 	//check if timeDueDate and StartDate is valid
-	err = t.timeSrv.CheckFor339Format(req.EndTime)
+	req.EndTime, err = t.timeSrv.CheckFor339Format(req.EndTime)
 	if err != nil {
 		return nil, ResponseEntity.NewCustomServiceError("Bad Start-Time Input", err)
 	}
 
-	err = t.timeSrv.CheckFor339Format(req.StartTime)
+	req.StartTime, err = t.timeSrv.CheckFor339Format(req.StartTime)
 	if err != nil {
 		return nil, ResponseEntity.NewCustomServiceError("Bad End-Time Input", err)
 	}
 
 	var schedule time.Time
 	if req.ScheduledDate != "" {
-		schedule, err = time.Parse(time.RFC3339, req.ScheduledDate)
+		schedule, err = t.timeSrv.Parse(req.ScheduledDate)
+		if err != nil {
+			return nil, ResponseEntity.NewCustomServiceError("Error when parsing scheduled date", err)
+		}
 
-		log.Println(err)
+		// log.Println(err)
 		ok := t.timeSrv.ScheduleTimeAfter(schedule)
 		if err != nil || !ok {
 			return nil, ResponseEntity.NewCustomServiceError("Invalid schedule date, schedule time cannot be in the past", err)
 		}
 
 		req.ScheduledDate = schedule.Format(time.RFC3339)
-		req.EndTime = t.timeSrv.CalcScheduleEndTime(schedule)
+		req.EndTime = t.timeSrv.CalcScheduleEndTimeString(schedule)
 	}
 
 	// create a reminder
@@ -274,7 +277,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 	case "never":
 		err = t.remindSrv.SetReminder(req)
 		if err != nil {
-			log.Println(err)
+			// log.Println(err)
 			return nil, ResponseEntity.NewInternalServiceError(err)
 		}
 	case "daily":
@@ -341,13 +344,13 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(vaId)
+	// fmt.Println(vaId)
 
 	body := []notificationEntity.NotificationBody{
 		{
 			Content: fmt.Sprintf("%s Just Created a Task", username),
 			Color:   notificationEntity.CreatedColor,
-			Time:    time.Now().String(),
+			Time:    time.Now().UTC().String(),
 		},
 	}
 
@@ -381,7 +384,7 @@ func (t *taskSrv) PersistTask(req *taskEntity.CreateTaskReq) (*taskEntity.Create
 		// insert into db
 		err = t.repo.Persist(ctx, req)
 		if err != nil {
-			log.Println(err)
+			// log.Println(err)
 			return nil, ResponseEntity.NewInternalServiceError(err)
 		}
 
@@ -711,12 +714,12 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 	req1.UpdatedAt = t.timeSrv.CurrentTimeString()
 
 	//check if timeDueDate and StartDate is valid
-	err = t.timeSrv.CheckFor339Format(req1.EndTime)
+	req1.EndTime, err = t.timeSrv.CheckFor339Format(req1.EndTime)
 	if err != nil {
 		return nil, ResponseEntity.NewCustomServiceError("Bad End Time Input", err)
 	}
 
-	err = t.timeSrv.CheckFor339Format(req1.StartTime)
+	req1.StartTime, err = t.timeSrv.CheckFor339Format(req1.StartTime)
 	if err != nil {
 		return nil, ResponseEntity.NewCustomServiceError("Bad Start Time Input", err)
 	}
@@ -731,52 +734,50 @@ func (t *taskSrv) EditTaskByID(taskId string, req *taskEntity.EditTaskReq) (*tas
 		}
 
 		req1.ScheduledDate = schedule.Format(time.RFC3339)
-		req1.EndTime = t.timeSrv.CalcScheduleEndTime(schedule)
+		req1.EndTime = t.timeSrv.CalcScheduleEndTimeString(schedule)
 	}
 
-	if req1.Repeat != req.Repeat {
-		switch req1.Repeat {
-		case "never":
-			err = t.remindSrv.SetReminder(req1)
-			if err != nil {
-				log.Println(err)
-				return nil, ResponseEntity.NewInternalServiceError(err)
-			}
-		case "daily":
-			err = t.remindSrv.SetDailyReminder(req1)
-			if err != nil {
-				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Daily Input")
-			}
-		case "weekly":
-			err = t.remindSrv.SetWeeklyReminder(req1)
-			if err != nil {
-				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Weekly Input")
-			}
-		case "bi-weekly":
-			err = t.remindSrv.SetBiWeeklyReminder(req1)
-			if err != nil {
-				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Bi Weekly Input")
-			}
-		case "monthly":
-			err = t.remindSrv.SetMonthlyReminder(req1)
-			if err != nil {
-				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Monthly Input")
-			}
-		case "yearly":
-			err = t.remindSrv.SetYearlyReminder(req1)
-			if err != nil {
-				return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Yearly Input")
-			}
-		default:
-			req.Repeat = "never"
-			// err = t.remindSrv.SetReminder(req)
-
-			// if err != nil {
-			// 	log.Println("From setting reminder",err)
-			// 	return nil, ResponseEntity.NewInternalServiceError(err)
-			// }
-
+	switch req1.Repeat {
+	case "never":
+		err = t.remindSrv.SetReminder(req1)
+		if err != nil {
+			log.Println(err)
+			return nil, ResponseEntity.NewInternalServiceError(err)
 		}
+	case "daily":
+		err = t.remindSrv.SetDailyReminder(req1)
+		if err != nil {
+			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Daily Input")
+		}
+	case "weekly":
+		err = t.remindSrv.SetWeeklyReminder(req1)
+		if err != nil {
+			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Weekly Input")
+		}
+	case "bi-weekly":
+		err = t.remindSrv.SetBiWeeklyReminder(req1)
+		if err != nil {
+			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Bi Weekly Input")
+		}
+	case "monthly":
+		err = t.remindSrv.SetMonthlyReminder(req1)
+		if err != nil {
+			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Monthly Input")
+		}
+	case "yearly":
+		err = t.remindSrv.SetYearlyReminder(req1)
+		if err != nil {
+			return nil, ResponseEntity.NewInternalServiceError("Bad Recurrent Yearly Input")
+		}
+	default:
+		req.Repeat = "never"
+		// err = t.remindSrv.SetReminder(req)
+
+		// if err != nil {
+		// 	log.Println("From setting reminder",err)
+		// 	return nil, ResponseEntity.NewInternalServiceError(err)
+		// }
+
 	}
 
 	var features taskEntity.TaskFeatures
@@ -964,7 +965,7 @@ func (t *taskSrv) PersistComment(req *taskEntity.CreateCommentReq) (*taskEntity.
 	}
 
 	//set time
-	req.CreatedAt = t.timeSrv.CurrentTime().Format(time.RFC3339)
+	req.CreatedAt = t.timeSrv.CurrentTimeString() // Format(time.RFC3339)
 
 	// insert into db
 	err = t.repo.PersistComment(ctx, req)
@@ -1102,16 +1103,15 @@ func (t *taskSrv) updateTask(req *taskEntity.EditTaskReq, task *taskEntity.GetTa
 		task.Assigned = req.Assigned
 	}
 
-	if req.StartTime == "" {
-		task.StartTime = t.timeSrv.CurrentTimeString()
+	if req.StartTime != "" {
+		task.StartTime = req.StartTime
 	}
 
-	if req.EndTime == "" {
-		task.EndTime = t.timeSrv.CalcEndTimeString()
+	if req.EndTime != "" {
+		task.EndTime = req.EndTime
 	}
 
 	if req.ScheduledDate != "" && req.ScheduledDate != task.ScheduledDate {
-		log.Println(req.ScheduledDate)
 		task.ScheduledDate = req.ScheduledDate
 	}
 
