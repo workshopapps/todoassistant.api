@@ -553,7 +553,7 @@ func (s *sqlRepo) GetAllTasks(ctx context.Context, userId string) ([]*taskEntity
 			return nil, err
 		}
 
-		if tim.TimeBefore(end) && singleTask.Status == "PENDING" {
+		if tim.TimeBefore(end) { //&& singleTask.Status == "PENDING" {
 			features.IsExpired = true
 		}
 
