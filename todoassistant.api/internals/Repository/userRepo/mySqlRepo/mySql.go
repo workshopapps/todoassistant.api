@@ -256,6 +256,7 @@ func (m *mySql) UpdateUser(req *userEntity.UpdateUserReq, userId string) error {
                  `, req.FirstName, req.LastName, req.Email, req.Phone, req.Gender, req.DateOfBirth, userId)
 
 	_, err := m.conn.ExecContext(ctx, stmt)
+	log.Println("from repo", err)
 	if err != nil {
 		return err
 	}

@@ -109,6 +109,7 @@ func (u *userHandler) UpdateUser(c *gin.Context) {
 	}
 
 	user, errorRes := u.srv.UpdateUser(&req, userFromRequest(c))
+	log.Println(errorRes)
 	if errorRes != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Cannot Update!", err, nil))
 		return

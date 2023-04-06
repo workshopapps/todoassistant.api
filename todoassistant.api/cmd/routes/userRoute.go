@@ -31,7 +31,7 @@ func UserRoutes(v1 *gin.RouterGroup, srv userService.UserSrv, tokenSrv tokenserv
 		// Get a specific user
 		users.GET("/:user_id", userHandler.GetUser)
 		// Update a specific user
-		users.PUT("/:user_id", userHandler.UpdateUser)
+		users.PATCH("/:user_id", userHandler.UpdateUser)
 		// Update user image
 		users.POST("/upload", userHandler.UploadImage)
 		// Change user password
