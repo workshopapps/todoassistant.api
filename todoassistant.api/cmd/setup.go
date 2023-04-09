@@ -12,6 +12,7 @@ import (
 	"test-va/cmd/middlewares"
 	"test-va/cmd/routes"
 	mySqlCallRepo "test-va/internals/Repository/callRepo/mySqlRepo"
+	mySqlRepo5 "test-va/internals/Repository/dataRepo/mySqlRepo"
 	mySqlNotifRepo "test-va/internals/Repository/notificationRepo/mysqlRepo"
 	projectMysqlRepo "test-va/internals/Repository/projectRepo/mySqlRepo"
 	mySqlRemindRepo "test-va/internals/Repository/reminderRepo/mySqlRepo"
@@ -26,6 +27,7 @@ import (
 	"test-va/internals/service/awsService"
 	"test-va/internals/service/callService"
 	"test-va/internals/service/cryptoService"
+	"test-va/internals/service/dataService"
 	"test-va/internals/service/emailService"
 	log_4_go "test-va/internals/service/loggerService/log-4-go"
 	"test-va/internals/service/notificationService"
@@ -181,6 +183,9 @@ func Setup() {
 	// subscribe repo
 	subRepo := mySqlRepo4.NewMySqlSubscribeRepo(conn)
 
+	// data repo
+	dataRepo := mySqlRepo5.NewDataSqlRepo(conn)
+
 	//SERVICES
 
 	//time service
@@ -275,7 +280,9 @@ func Setup() {
 	// subscribe service
 	subscribeSrv := subscribeService.NewSubscribeSrv(subRepo, emailSrv, emitter)
 
-	//router setup
+	// data service
+	dataSrv := dataService.NewDataService(dataRepo)
+
 	r := gin.New()
 	r.MaxMultipartMemory = 1 << 20
 	r.Use(middlewares.CORS())
@@ -326,6 +333,9 @@ func Setup() {
 
 	//handle subscribe route
 	routes.SubscribeRoutes(v1, subscribeSrv)
+
+	//handle data route
+	routes.DataRoutes(v1, dataSrv)
 
 	// Payment route
 	v1.POST("/checkout", paymentHandler.CheckoutCreator)
