@@ -92,6 +92,7 @@ type UpdateUserReq struct {
 	Phone         string `json:"phone"`
 	Gender        string `json:"gender"`
 	DateOfBirth   string `json:"date_of_birth"`
+	Avatar        string `json:"avatar"`
 	AccountStatus string `json:"account_status"`
 	PaymentStatus string `json:"payment_status"`
 	CountryId     int    `json:"country_id"`
@@ -99,12 +100,14 @@ type UpdateUserReq struct {
 }
 
 type UpdateUserRes struct {
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	Email       string `json:"email"`
-	Phone       string `json:"phone"`
-	Gender      string `json:"gender"`
-	DateOfBirth string `json:"date_of_birth"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Gender     string `json:"gender"`
+	Avatar     string `json:"avatar"`
+	CountryId  int    `json:"country_id"`
+	Occupation string `json:"occupation"`
 }
 
 type UsersRes struct {
