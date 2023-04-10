@@ -88,7 +88,6 @@ func (u *userSrv) Login(req *userEntity.LoginReq) (*userEntity.LoginRes, *Respon
 	// }
 	productEmailSettings, _ := u.repo.GetProductEmailSettingsById(user.UserId)
 	log.Println(notificationSettings)
-
 	loggedInUser := userEntity.LoginRes{
 		UserId:               user.UserId,
 		Email:                user.Email,
@@ -97,6 +96,8 @@ func (u *userSrv) Login(req *userEntity.LoginReq) (*userEntity.LoginRes, *Respon
 		Phone:                user.Phone,
 		Gender:               user.Gender,
 		Avatar:               user.Avatar,
+		Occupation:           user.Occupation,
+		CountryId:            user.CountryId,
 		NotificationSettings: *notificationSettings,
 		ProductEmailSettings: *productEmailSettings,
 		Token:                token,
