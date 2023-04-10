@@ -29,44 +29,48 @@ type LoginReq struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type NotificationSettingsRes struct{
-	NewComments 		bool `json:"new_comment"`
-	ExpiredTasks 		bool `json:"expired_tasks"`
-	ReminderTasks 		bool `json:"reminder_tasks"`
-	VaAcceptingTask		bool `json:"va_accepting_task"`
-	TaskAssingnedVa		bool `json:"task_assigned"`
-	Subscribtion		bool `json:"subscription"`
+type NotificationSettingsRes struct {
+	NewComments     bool `json:"new_comment"`
+	ExpiredTasks    bool `json:"expired_tasks"`
+	ReminderTasks   bool `json:"reminder_tasks"`
+	VaAcceptingTask bool `json:"va_accepting_task"`
+	TaskAssingnedVa bool `json:"task_assigned"`
+	Subscribtion    bool `json:"subscription"`
 }
 
 type ProductEmailSettingsRes struct {
-	NewProducts			bool	`json:"new_product"`
-	LoginAlert			bool	`json:"logn_alert"`
-	PromotionAndOffers	bool	`json:"promotions_and_offers"`
-	TipsDailyDigest		bool	`json:"tips_daily_digest"`
+	NewProducts        bool `json:"new_product"`
+	LoginAlert         bool `json:"logn_alert"`
+	PromotionAndOffers bool `json:"promotions_and_offers"`
+	TipsDailyDigest    bool `json:"tips_daily_digest"`
 }
 type LoginRes struct {
-	UserId       		string `json:"user_id"`
-	Email        		string `json:"email"`
-	FirstName    		string `json:"first_name"`
-	LastName     		string `json:"last_name"`
-	Phone        		string `json:"phone"`
-	Gender       		string `json:"gender"`
-	Avatar       		string `json:"avatar"`
+	UserId               string                  `json:"user_id"`
+	Email                string                  `json:"email"`
+	FirstName            string                  `json:"first_name"`
+	LastName             string                  `json:"last_name"`
+	Phone                string                  `json:"phone"`
+	Gender               string                  `json:"gender"`
+	Avatar               string                  `json:"avatar"`
+	CountryId            int                     `json:"country_id"`
+	Occupation           string                  `json:"occupation"`
 	NotificationSettings NotificationSettingsRes `json:"notification_settings"`
 	ProductEmailSettings ProductEmailSettingsRes `json:"product_email_settings"`
-	Token        		string `json:"access_token"`
-	RefreshToken 		string `json:"refresh_token"`
+	Token                string                  `json:"access_token"`
+	RefreshToken         string                  `json:"refresh_token"`
 }
 
 type GetByEmailRes struct {
-	UserId    string `json:"user_id"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Phone     string `json:"phone"`
-	Gender    string `json:"gender"`
-	Avatar    string `json:"avatar"`
+	UserId     string `json:"user_id"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	Phone      string `json:"phone"`
+	Gender     string `json:"gender"`
+	Avatar     string `json:"avatar"`
+	CountryId  int    `json:"country_id"`
+	Occupation string `json:"occupation"`
 }
 
 type GetByIdRes struct {
@@ -90,6 +94,8 @@ type UpdateUserReq struct {
 	DateOfBirth   string `json:"date_of_birth"`
 	AccountStatus string `json:"account_status"`
 	PaymentStatus string `json:"payment_status"`
+	CountryId     int    `json:"country_id"`
+	Occupation    string `json:"occupation"`
 }
 
 type UpdateUserRes struct {

@@ -99,7 +99,7 @@ func (m *mySql) GetUsers(page int) ([]*userEntity.UsersRes, error) {
 
 func (m *mySql) GetByEmail(email string) (*userEntity.GetByEmailRes, error) {
 	query := fmt.Sprintf(`
-		SELECT user_id, email, password, first_name, last_name, phone, COALESCE(gender, ''), avatar
+		SELECT user_id, email, password, first_name, last_name, phone, COALESCE(gender, ''), avatar,COALESCE(occupation, ''), COALESCE(country_id, 0)
 		FROM Users
 		WHERE email = '%s'
 	`, email)
@@ -114,6 +114,8 @@ func (m *mySql) GetByEmail(email string) (*userEntity.GetByEmailRes, error) {
 		&user.Phone,
 		&user.Gender,
 		&user.Avatar,
+		&user.Occupation,
+		&user.CountryId,
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -252,8 +254,10 @@ func (m *mySql) UpdateUser(req *userEntity.UpdateUserReq, userId string) error {
                  email ='%s',
                  phone='%s',
                  gender='%s',
-                 date_of_birth='%s' WHERE user_id ='%s'
-                 `, req.FirstName, req.LastName, req.Email, req.Phone, req.Gender, req.DateOfBirth, userId)
+                 date_of_birth='%s',
+				 occupation='%s',
+				 country_id='%d' WHERE user_id ='%s'
+                 `, req.FirstName, req.LastName, req.Email, req.Phone, req.Gender, req.DateOfBirth, req.Occupation, req.CountryId, userId)
 
 	_, err := m.conn.ExecContext(ctx, stmt)
 	log.Println("from repo", err)
