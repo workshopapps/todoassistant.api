@@ -252,8 +252,10 @@ func (m *mySql) UpdateUser(req *userEntity.UpdateUserReq, userId string) error {
                  email ='%s',
                  phone='%s',
                  gender='%s',
-                 date_of_birth='%s' WHERE user_id ='%s'
-                 `, req.FirstName, req.LastName, req.Email, req.Phone, req.Gender, req.DateOfBirth, userId)
+                 date_of_birth='%s',
+				 occupation='%s',
+				 country_id='%d' WHERE user_id ='%s'
+                 `, req.FirstName, req.LastName, req.Email, req.Phone, req.Gender, req.DateOfBirth, req.Occupation, req.CountryId, userId)
 
 	_, err := m.conn.ExecContext(ctx, stmt)
 	log.Println("from repo", err)
