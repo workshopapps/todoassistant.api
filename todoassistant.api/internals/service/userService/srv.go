@@ -194,12 +194,14 @@ func (u *userSrv) UpdateUser(req *userEntity.UpdateUserReq, userId string) (*use
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
 	data := &userEntity.UpdateUserRes{
-		FirstName:   req.FirstName,
-		LastName:    req.LastName,
-		Email:       req.Email,
-		Phone:       req.Phone,
-		Gender:      req.Gender,
-		DateOfBirth: req.DateOfBirth,
+		FirstName:  req.FirstName,
+		LastName:   req.LastName,
+		Email:      req.Email,
+		Phone:      req.Phone,
+		Gender:     req.Gender,
+		Avatar:     req.Avatar,
+		Occupation: req.Occupation,
+		CountryId:  req.CountryId,
 	}
 
 	return data, nil
