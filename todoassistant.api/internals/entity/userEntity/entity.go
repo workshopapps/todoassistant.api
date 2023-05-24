@@ -44,6 +44,23 @@ type ProductEmailSettingsRes struct {
 	PromotionAndOffers bool `json:"promotions_and_offers"`
 	TipsDailyDigest    bool `json:"tips_daily_digest"`
 }
+
+type ReminderSettngsReq struct {
+	UserId       string `json:"user_id"`
+	RemindMeVia  string `json:"remindMeVia"`
+	WhenSnooze   string `json:"whenSnooze"`
+	AutoReminder string `json:"autoReminder"`
+	ReminderTime string `json:"reminderTime"`
+	Refresh      string `json:"refresh"`
+}
+
+type ReminderSettngsRes struct {
+	RemindMeVia  string `json:"remindMeVia"`
+	WhenSnooze   string `json:"whenSnooze"`
+	AutoReminder string `json:"autoReminder"`
+	ReminderTime string `json:"reminderTime"`
+	Refresh      string `json:"refresh"`
+}
 type LoginRes struct {
 	UserId               string                  `json:"user_id"`
 	Email                string                  `json:"email"`
