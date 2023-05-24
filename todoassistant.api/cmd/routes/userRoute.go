@@ -40,5 +40,9 @@ func UserRoutes(v1 *gin.RouterGroup, srv userService.UserSrv, tokenSrv tokenserv
 		users.DELETE("/:user_id", userHandler.DeleteUser)
 		// Assign VA to User
 		users.POST("/assign-va/:va_id", userHandler.AssignVAToUser)
+
+		//reminder settings
+		users.POST("/reminder-settings", userHandler.SetReminderSettings)
+		users.GET("/reminder-settings", userHandler.GetUserReminderSettings)
 	}
 }

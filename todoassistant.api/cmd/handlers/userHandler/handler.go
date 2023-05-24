@@ -232,3 +232,35 @@ func (u *userHandler) AssignVAToUser(c *gin.Context) {
 func userFromRequest(c *gin.Context) string {
 	return c.Param("user_id")
 }
+
+// SetReminderSettings
+func (u *userHandler) SetReminderSettings(c *gin.Context) {
+	var req userEntity.ReminderSettngsReq
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Request", err, nil))
+		return
+	}
+	req.UserId = c.GetString("userId")
+	response, errRes := u.srv.SetReminderSettings(&req)
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Cannot Set Reminder Settings", errRes, nil))
+		return
+	}
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Reminder Settings Set Successfully", response, nil))
+}
+
+// getuserReminderSettings
+func (u *userHandler) GetUserReminderSettings(c *gin.Context) {
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Invalid User", nil, nil))
+		return
+	}
+	response, errRes := u.srv.GetReminderSettings(userId)
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Cannot Get Reminder Settings", errRes, nil))
+		return
+	}
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Reminder Settings Fetched Successfully", response, nil))
+}

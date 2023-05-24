@@ -423,3 +423,79 @@ func (m *mySql) GetProductEmailSettingsById(userId string) (*userEntity.ProductE
 	}
 	return &productEmailSettings, nil
 }
+
+//set reminder settings
+
+func (m *mySql) SetReminderSettings(req *userEntity.ReminderSettngsReq) error {
+	ctx := context.Background()
+	tx, err := m.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Check if a record already exists for the given userID
+	checkStmt := fmt.Sprintf("SELECT COUNT(*) FROM Reminder_Settings WHERE user_id = '%v'", req.UserId)
+	var count int
+	err = tx.QueryRowContext(ctx, checkStmt).Scan(&count)
+	if err != nil {
+		return err
+	}
+
+	var stmt string
+	if count > 0 {
+		// Update the existing record
+		stmt = fmt.Sprintf(`UPDATE Reminder_Settings SET
+			remindMeVia = '%v',
+			whenSnooze = '%v',
+			autoReminder = '%v',
+			reminderTime = '%v',
+			refresh = '%v'
+			WHERE user_id = '%v'`,
+			req.RemindMeVia, req.WhenSnooze, req.AutoReminder, req.ReminderTime, req.Refresh, req.UserId)
+	} else {
+		// Insert a new record
+		stmt = fmt.Sprintf(`INSERT INTO Reminder_Settings(
+			remindMeVia,
+			whenSnooze,
+			autoReminder,
+			reminderTime,
+			refresh,
+			user_id
+		) VALUES ('%v', '%v', '%v', '%v', '%v', '%v')`,
+			req.RemindMeVia, req.WhenSnooze, req.AutoReminder, req.ReminderTime, req.Refresh, req.UserId)
+	}
+
+	_, err = tx.ExecContext(ctx, stmt)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// get reminder settings for a user
+func (m *mySql) GetReminderSettings(userId string) (*userEntity.ReminderSettngsRes, error) {
+	stmt := fmt.Sprintf(`
+		SELECT remindMeVia, whenSnooze, autoReminder, reminderTime, refresh
+		FROM Reminder_Settings
+		WHERE user_id = '%s'
+	`, userId)
+	var reminderSettings userEntity.ReminderSettngsRes
+	ctx := context.Background()
+	err := m.conn.QueryRowContext(ctx, stmt).Scan(
+		&reminderSettings.RemindMeVia,
+		&reminderSettings.WhenSnooze,
+		&reminderSettings.AutoReminder,
+		&reminderSettings.ReminderTime,
+		&reminderSettings.Refresh,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return &reminderSettings, nil
+}
