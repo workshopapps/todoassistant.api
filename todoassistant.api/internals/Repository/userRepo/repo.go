@@ -20,4 +20,8 @@ type UserRepository interface {
 	//user settings functions
 	GetNotificationSettingsById(userId string) (*userEntity.NotificationSettingsRes, error)
 	GetProductEmailSettingsById(userId string) (*userEntity.ProductEmailSettingsRes, error)
+
+	//set reminder settings
+	SetReminderSettings(req *userEntity.ReminderSettngsReq) error
+	GetReminderSettings(userId string) (*userEntity.ReminderSettngsRes, error)
 }

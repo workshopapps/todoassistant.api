@@ -37,6 +37,8 @@ type UserSrv interface {
 	ResetPasswordWithToken(req *userEntity.ResetPasswordWithTokenReq, token, userId string) *ResponseEntity.ServiceError
 	DeleteUser(user_id string) error
 	AssignVAToUser(user_id, va_id string) *ResponseEntity.ServiceError
+	SetReminderSettings(req *userEntity.ReminderSettngsReq) (*userEntity.ReminderSettngsRes, *ResponseEntity.ServiceError)
+	GetReminderSettings(userId string) (*userEntity.ReminderSettngsRes, *ResponseEntity.ServiceError)
 }
 
 type userSrv struct {
@@ -570,6 +572,39 @@ func (u *userSrv) AssignVAToUser(user_id, va_id string) *ResponseEntity.ServiceE
 		}
 	}
 	return nil
+}
+
+//SetReminderSettings
+
+func (u *userSrv) SetReminderSettings(req *userEntity.ReminderSettngsReq) (*userEntity.ReminderSettngsRes, *ResponseEntity.ServiceError) {
+	err := u.validator.Validate(req)
+	if err != nil {
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+	err = u.repo.SetReminderSettings(req)
+	if err != nil {
+		log.Println(err)
+		return nil, ResponseEntity.NewInternalServiceError("Could not save reminder settings")
+	}
+	data := &userEntity.ReminderSettngsRes{
+		RemindMeVia:  req.RemindMeVia,
+		WhenSnooze:   req.WhenSnooze,
+		AutoReminder: req.AutoReminder,
+		ReminderTime: req.ReminderTime,
+		Refresh:      req.Refresh,
+	}
+
+	return data, nil
+
+}
+
+func (u *userSrv) GetReminderSettings(userId string) (*userEntity.ReminderSettngsRes, *ResponseEntity.ServiceError) {
+	data, err := u.repo.GetReminderSettings(userId)
+	if err != nil {
+		log.Println(err)
+		return nil, ResponseEntity.NewInternalServiceError("Could not get reminder settings")
+	}
+	return data, nil
 }
 
 // Auxillary Function
