@@ -24,6 +24,7 @@ func UserRoutes(v1 *gin.RouterGroup, srv userService.UserSrv, tokenSrv tokenserv
 	v1.POST("/user/reset-password-token", userHandler.ResetPasswordWithToken)
 
 	users := v1.Group("/user")
+	settings := users.Group("/settings")
 	users.Use(jwtMWare.ValidateJWT())
 	{
 		// Get all users
@@ -41,8 +42,17 @@ func UserRoutes(v1 *gin.RouterGroup, srv userService.UserSrv, tokenSrv tokenserv
 		// Assign VA to User
 		users.POST("/assign-va/:va_id", userHandler.AssignVAToUser)
 
-		//reminder settings
-		users.POST("/reminder-settings", userHandler.SetReminderSettings)
-		users.GET("/reminder-settings", userHandler.GetUserReminderSettings)
 	}
+	settings.Use(jwtMWare.ValidateJWT())
+	{
+		//get settings
+		settings.GET("/", userHandler.GetSettings)
+
+		//update reminder settings
+		settings.PATCH("/reminder-settings", userHandler.UpdateReminderSettings)
+		settings.PATCH("/notification-settings", userHandler.UpdateNotificationSettings)
+		settings.PATCH("/product-email-settings", userHandler.UpdateProductEmailSettings)
+
+	}
+
 }
