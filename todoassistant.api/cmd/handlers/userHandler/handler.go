@@ -234,15 +234,29 @@ func userFromRequest(c *gin.Context) string {
 }
 
 // SetReminderSettings
+
+func (u *userHandler) GetSettings(c *gin.Context) {
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Invalid User", nil, nil))
+		return
+	}
+	response, errRes := u.srv.GetUserSettings(userId)
+	if errRes != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Cannot Get Reminder Settings", errRes, nil))
+		return
+	}
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Reminder Settings Fetched Successfully", response, nil))
+}
 func (u *userHandler) SetReminderSettings(c *gin.Context) {
-	var req userEntity.ReminderSettngsReq
+	var req userEntity.ReminderSettingsReq
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Request", err, nil))
 		return
 	}
-	req.UserId = c.GetString("userId")
-	response, errRes := u.srv.SetReminderSettings(&req)
+	// req.UserId = c.GetString("userId")
+	response, errRes := u.srv.SetReminderSettings(&req, c.GetString("userId"))
 	if errRes != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Cannot Set Reminder Settings", errRes, nil))
 		return
@@ -263,4 +277,70 @@ func (u *userHandler) GetUserReminderSettings(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Reminder Settings Fetched Successfully", response, nil))
+}
+
+func (u *userHandler) UpdateReminderSettings(c *gin.Context) {
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseEntity.BuildErrorResponse(http.StatusUnauthorized, "You are not allowed to access this resource", nil, nil))
+		return
+	}
+
+	var req userEntity.ReminderSettingsReq
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Request", err, nil))
+		return
+	}
+
+	reminder, errorRes := u.srv.UpdateReminderSettings(&req, userId)
+	log.Println(errorRes)
+	if errorRes != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Cannot Update!", err, nil))
+		return
+	}
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(200, "Reminder settings updated successfully", reminder, nil))
+}
+
+func (u *userHandler) UpdateNotificationSettings(c *gin.Context) {
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseEntity.BuildErrorResponse(http.StatusUnauthorized, "You are not allowed to access this resource", nil, nil))
+		return
+	}
+	var req userEntity.NotificationSettingsReq
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Request", err, nil))
+		return
+	}
+	reminder, errorRes := u.srv.UpdateNotificationSettings(&req, userId)
+	log.Println(errorRes)
+	if errorRes != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Cannot Update!", err, nil))
+		return
+	}
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(200, "Notification settings updated successfully", reminder, nil))
+
+}
+
+func (u *userHandler) UpdateProductEmailSettings(c *gin.Context) {
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseEntity.BuildErrorResponse(http.StatusUnauthorized, "You are not allowed to access this resource", nil, nil))
+		return
+	}
+	var req userEntity.ProductEmailSettingsReq
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Bad Request", err, nil))
+		return
+	}
+	reminder, errorRes := u.srv.UpdateProductEmailSettings(&req, userId)
+	// log.Println(errorRes)
+	if errorRes != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ResponseEntity.BuildErrorResponse(http.StatusBadRequest, "Cannot Update!", err, nil))
+		return
+	}
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(200, "Product Email settings updated successfully", reminder, nil))
 }
