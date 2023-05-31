@@ -40,27 +40,48 @@ type NotificationSettingsRes struct {
 
 type ProductEmailSettingsRes struct {
 	NewProducts        bool `json:"new_product"`
-	LoginAlert         bool `json:"logn_alert"`
+	LoginAlert         bool `json:"login_alert"`
 	PromotionAndOffers bool `json:"promotions_and_offers"`
 	TipsDailyDigest    bool `json:"tips_daily_digest"`
 }
 
-type ReminderSettngsReq struct {
-	UserId       string `json:"user_id"`
-	RemindMeVia  string `json:"remindMeVia"`
-	WhenSnooze   string `json:"whenSnooze"`
-	AutoReminder string `json:"autoReminder"`
-	ReminderTime string `json:"reminderTime"`
+type NotificationSettingsReq struct {
+	UserId          string `json:"user_id"`
+	NewComments     bool   `json:"new_comment"`
+	ExpiredTasks    bool   `json:"expired_tasks"`
+	ReminderTasks   bool   `json:"reminder_tasks"`
+	VaAcceptingTask bool   `json:"va_accepting_task"`
+	TaskAssingnedVa bool   `json:"task_assigned"`
+	Subscribtion    bool   `json:"subscription"`
+}
+
+type ProductEmailSettingsReq struct {
+	NewProducts        bool `json:"new_product"`
+	LoginAlert         bool `json:"login_alert"`
+	PromotionAndOffers bool `json:"promotions_and_offers"`
+	TipsDailyDigest    bool `json:"tips_daily_digest"`
+}
+type ReminderSettingsReq struct {
+	RemindMeVia  string `json:"remind_me_via"`
+	WhenSnooze   string `json:"when_snooze"`
+	AutoReminder string `json:"auto_reminder"`
+	ReminderTime string `json:"reminder_time"`
 	Refresh      string `json:"refresh"`
 }
 
-type ReminderSettngsRes struct {
-	RemindMeVia  string `json:"remindMeVia"`
-	WhenSnooze   string `json:"whenSnooze"`
-	AutoReminder string `json:"autoReminder"`
-	ReminderTime string `json:"reminderTime"`
+type UserSettingsRes struct {
+	ReminderSettings     ReminderSettingsRes     `json:"reminder_settings"`
+	NotificationSettings NotificationSettingsRes `json:"notification_settings"`
+	ProductEmailSettings ProductEmailSettingsRes `json:"product_email_settings"`
+}
+type ReminderSettingsRes struct {
+	RemindMeVia  string `json:"remind_me_via"`
+	WhenSnooze   string `json:"when_snooze"`
+	AutoReminder string `json:"auto_reminder"`
+	ReminderTime string `json:"reminder_time"`
 	Refresh      string `json:"refresh"`
 }
+
 type LoginRes struct {
 	UserId               string                  `json:"user_id"`
 	Email                string                  `json:"email"`

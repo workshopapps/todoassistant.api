@@ -37,8 +37,12 @@ type UserSrv interface {
 	ResetPasswordWithToken(req *userEntity.ResetPasswordWithTokenReq, token, userId string) *ResponseEntity.ServiceError
 	DeleteUser(user_id string) error
 	AssignVAToUser(user_id, va_id string) *ResponseEntity.ServiceError
-	SetReminderSettings(req *userEntity.ReminderSettngsReq) (*userEntity.ReminderSettngsRes, *ResponseEntity.ServiceError)
-	GetReminderSettings(userId string) (*userEntity.ReminderSettngsRes, *ResponseEntity.ServiceError)
+	SetReminderSettings(req *userEntity.ReminderSettingsReq, userId string) (*userEntity.ReminderSettingsRes, *ResponseEntity.ServiceError)
+	GetReminderSettings(userId string) (*userEntity.ReminderSettingsRes, *ResponseEntity.ServiceError)
+	GetUserSettings(userId string) (*userEntity.UserSettingsRes, *ResponseEntity.ServiceError)
+	UpdateReminderSettings(req *userEntity.ReminderSettingsReq, userId string) (*userEntity.ReminderSettingsRes, *ResponseEntity.ServiceError)
+	UpdateProductEmailSettings(req *userEntity.ProductEmailSettingsReq, userId string) (*userEntity.ProductEmailSettingsRes, *ResponseEntity.ServiceError)
+	UpdateNotificationSettings(req *userEntity.NotificationSettingsReq, userId string) (*userEntity.NotificationSettingsRes, *ResponseEntity.ServiceError)
 }
 
 type userSrv struct {
@@ -576,17 +580,17 @@ func (u *userSrv) AssignVAToUser(user_id, va_id string) *ResponseEntity.ServiceE
 
 //SetReminderSettings
 
-func (u *userSrv) SetReminderSettings(req *userEntity.ReminderSettngsReq) (*userEntity.ReminderSettngsRes, *ResponseEntity.ServiceError) {
+func (u *userSrv) SetReminderSettings(req *userEntity.ReminderSettingsReq, userId string) (*userEntity.ReminderSettingsRes, *ResponseEntity.ServiceError) {
 	err := u.validator.Validate(req)
 	if err != nil {
 		return nil, ResponseEntity.NewInternalServiceError(err)
 	}
-	err = u.repo.SetReminderSettings(req)
+	err = u.repo.SetReminderSettings(req, userId)
 	if err != nil {
 		log.Println(err)
 		return nil, ResponseEntity.NewInternalServiceError("Could not save reminder settings")
 	}
-	data := &userEntity.ReminderSettngsRes{
+	data := &userEntity.ReminderSettingsRes{
 		RemindMeVia:  req.RemindMeVia,
 		WhenSnooze:   req.WhenSnooze,
 		AutoReminder: req.AutoReminder,
@@ -598,11 +602,93 @@ func (u *userSrv) SetReminderSettings(req *userEntity.ReminderSettngsReq) (*user
 
 }
 
-func (u *userSrv) GetReminderSettings(userId string) (*userEntity.ReminderSettngsRes, *ResponseEntity.ServiceError) {
+func (u *userSrv) GetReminderSettings(userId string) (*userEntity.ReminderSettingsRes, *ResponseEntity.ServiceError) {
 	data, err := u.repo.GetReminderSettings(userId)
 	if err != nil {
 		log.Println(err)
 		return nil, ResponseEntity.NewInternalServiceError("Could not get reminder settings")
+	}
+	return data, nil
+}
+
+// get user settings
+func (u *userSrv) GetUserSettings(userId string) (*userEntity.UserSettingsRes, *ResponseEntity.ServiceError) {
+	// data, err := u.repo.GetUserSettings(userId)
+	notificationSettings, err := u.repo.GetNotificationSettingsById(userId)
+	productEmailSettings, err := u.repo.GetProductEmailSettingsById(userId)
+	reminderSettings, err := u.repo.GetReminderSettings(userId)
+	if err != nil {
+		log.Println(err)
+		return nil, ResponseEntity.NewInternalServiceError("Could not get user settings")
+	}
+
+	data := &userEntity.UserSettingsRes{
+		NotificationSettings: *notificationSettings,
+		ProductEmailSettings: *productEmailSettings,
+		ReminderSettings:     *reminderSettings,
+		// ReminderSettings: ,
+	}
+	return data, nil
+}
+
+func (u *userSrv) UpdateReminderSettings(req *userEntity.ReminderSettingsReq, userId string) (*userEntity.ReminderSettingsRes, *ResponseEntity.ServiceError) {
+	err := u.validator.Validate(req)
+	if err != nil {
+		return nil, ResponseEntity.NewValidatingError(err)
+	}
+
+	err = u.repo.UpdateReminderSettings(req, userId)
+	if err != nil {
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+	data := &userEntity.ReminderSettingsRes{
+		RemindMeVia:  req.RemindMeVia,
+		WhenSnooze:   req.WhenSnooze,
+		AutoReminder: req.AutoReminder,
+		ReminderTime: req.ReminderTime,
+		Refresh:      req.Refresh,
+	}
+
+	return data, nil
+}
+
+func (u *userSrv) UpdateProductEmailSettings(req *userEntity.ProductEmailSettingsReq, userId string) (*userEntity.ProductEmailSettingsRes, *ResponseEntity.ServiceError) {
+	err := u.validator.Validate(req)
+	if err != nil {
+		return nil, ResponseEntity.NewValidatingError(err)
+	}
+
+	err = u.repo.UpdateProductEmailSettings(req, userId)
+	if err != nil {
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+	data := &userEntity.ProductEmailSettingsRes{
+		NewProducts:        req.NewProducts,
+		LoginAlert:         req.LoginAlert,
+		PromotionAndOffers: req.PromotionAndOffers,
+		TipsDailyDigest:    req.TipsDailyDigest,
+	}
+
+	return data, nil
+}
+
+func (u *userSrv) UpdateNotificationSettings(req *userEntity.NotificationSettingsReq, userId string) (*userEntity.NotificationSettingsRes, *ResponseEntity.ServiceError) {
+	err := u.validator.Validate(req)
+	if err != nil {
+		return nil, ResponseEntity.NewValidatingError(err)
+	}
+
+	err = u.repo.UpdateNotificationSettings(req, userId)
+	if err != nil {
+		return nil, ResponseEntity.NewInternalServiceError(err)
+	}
+	data := &userEntity.NotificationSettingsRes{
+		NewComments:     req.NewComments,
+		ExpiredTasks:    req.ExpiredTasks,
+		ReminderTasks:   req.ReminderTasks,
+		VaAcceptingTask: req.VaAcceptingTask,
+		TaskAssingnedVa: req.TaskAssingnedVa,
+		Subscribtion:    req.Subscribtion,
 	}
 	return data, nil
 }

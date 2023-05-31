@@ -211,11 +211,22 @@ func (m *mySql) userSettings(ctx context.Context, tx *sql.Tx, userId string) err
 		return err
 	}
 
+	remindResult, err := m.reminderSettings(ctx, tx, userId)
+	if err != nil {
+		return err
+	}
+
+	rId, err := remindResult.LastInsertId()
+	if err != nil {
+		return err
+	}
+
 	stmt := fmt.Sprintf(`INSERT INTO User_Settings(
 		user_id,
 		notification_settings_id,
-    	product_email_settings_id
-	) VALUES('%v', '%v', '%v')`, userId, nId, pId)
+    	product_email_settings_id,
+		reminder_settings_id
+	) VALUES('%v', '%v', '%v', '%v')`, userId, nId, pId, rId)
 
 	_, err = tx.ExecContext(ctx, stmt)
 	if err != nil {
@@ -237,6 +248,15 @@ func (m *mySql) notificationSettings(ctx context.Context, tx *sql.Tx, userId str
 // Create Product Email Settings
 func (m *mySql) productEmailSettings(ctx context.Context, tx *sql.Tx, userId string) (sql.Result, error) {
 	stmt := fmt.Sprintf(`INSERT INTO Product_Email_Settings(
+		user_id
+	) VALUES('%v')`, userId)
+
+	return tx.ExecContext(ctx, stmt)
+}
+
+// Create Product Email Settings
+func (m *mySql) reminderSettings(ctx context.Context, tx *sql.Tx, userId string) (sql.Result, error) {
+	stmt := fmt.Sprintf(`INSERT INTO Reminder_Settings(
 		user_id
 	) VALUES('%v')`, userId)
 
@@ -426,7 +446,7 @@ func (m *mySql) GetProductEmailSettingsById(userId string) (*userEntity.ProductE
 
 //set reminder settings
 
-func (m *mySql) SetReminderSettings(req *userEntity.ReminderSettngsReq) error {
+func (m *mySql) SetReminderSettings(req *userEntity.ReminderSettingsReq, userId string) error {
 	ctx := context.Background()
 	tx, err := m.conn.BeginTx(ctx, nil)
 	if err != nil {
@@ -435,7 +455,7 @@ func (m *mySql) SetReminderSettings(req *userEntity.ReminderSettngsReq) error {
 	defer tx.Rollback()
 
 	// Check if a record already exists for the given userID
-	checkStmt := fmt.Sprintf("SELECT COUNT(*) FROM Reminder_Settings WHERE user_id = '%v'", req.UserId)
+	checkStmt := fmt.Sprintf("SELECT COUNT(*) FROM Reminder_Settings WHERE user_id = '%v'", userId)
 	var count int
 	err = tx.QueryRowContext(ctx, checkStmt).Scan(&count)
 	if err != nil {
@@ -452,7 +472,7 @@ func (m *mySql) SetReminderSettings(req *userEntity.ReminderSettngsReq) error {
 			reminderTime = '%v',
 			refresh = '%v'
 			WHERE user_id = '%v'`,
-			req.RemindMeVia, req.WhenSnooze, req.AutoReminder, req.ReminderTime, req.Refresh, req.UserId)
+			req.RemindMeVia, req.WhenSnooze, req.AutoReminder, req.ReminderTime, req.Refresh, userId)
 	} else {
 		// Insert a new record
 		stmt = fmt.Sprintf(`INSERT INTO Reminder_Settings(
@@ -463,7 +483,7 @@ func (m *mySql) SetReminderSettings(req *userEntity.ReminderSettngsReq) error {
 			refresh,
 			user_id
 		) VALUES ('%v', '%v', '%v', '%v', '%v', '%v')`,
-			req.RemindMeVia, req.WhenSnooze, req.AutoReminder, req.ReminderTime, req.Refresh, req.UserId)
+			req.RemindMeVia, req.WhenSnooze, req.AutoReminder, req.ReminderTime, req.Refresh, userId)
 	}
 
 	_, err = tx.ExecContext(ctx, stmt)
@@ -478,13 +498,13 @@ func (m *mySql) SetReminderSettings(req *userEntity.ReminderSettngsReq) error {
 }
 
 // get reminder settings for a user
-func (m *mySql) GetReminderSettings(userId string) (*userEntity.ReminderSettngsRes, error) {
+func (m *mySql) GetReminderSettings(userId string) (*userEntity.ReminderSettingsRes, error) {
 	stmt := fmt.Sprintf(`
 		SELECT remindMeVia, whenSnooze, autoReminder, reminderTime, refresh
 		FROM Reminder_Settings
 		WHERE user_id = '%s'
 	`, userId)
-	var reminderSettings userEntity.ReminderSettngsRes
+	var reminderSettings userEntity.ReminderSettingsRes
 	ctx := context.Background()
 	err := m.conn.QueryRowContext(ctx, stmt).Scan(
 		&reminderSettings.RemindMeVia,
@@ -498,4 +518,82 @@ func (m *mySql) GetReminderSettings(userId string) (*userEntity.ReminderSettngsR
 		return nil, err
 	}
 	return &reminderSettings, nil
+}
+
+func (m *mySql) UpdateReminderSettings(req *userEntity.ReminderSettingsReq, userId string) error {
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
+	defer cancelFunc()
+
+	stmt := fmt.Sprintf(`UPDATE Reminder_Settings SET
+                 remindMeVia ='%s',
+                 whenSnooze='%s',
+                 autoReminder ='%s',
+                 refresh='%s' WHERE user_id ='%s'
+                 `, req.RemindMeVia, req.WhenSnooze, req.AutoReminder, req.Refresh, userId)
+
+	_, err := m.conn.ExecContext(ctx, stmt)
+	log.Println("from repo", err)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *mySql) UpdateProductEmailSettings(req *userEntity.ProductEmailSettingsReq, userId string) error {
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
+	defer cancelFunc()
+
+	stmt := `
+        UPDATE Product_Email_Settings
+        SET new_products = ?,
+            login_alert = ?,
+            promotions_and_offers = ?,
+            tips_daily_digest = ?
+        WHERE user_id = ?
+    `
+	query, err := m.conn.PrepareContext(ctx, stmt)
+	if err != nil {
+		return err
+	}
+	defer query.Close()
+
+	_, err = query.ExecContext(ctx, req.NewProducts, req.LoginAlert, req.PromotionAndOffers, req.TipsDailyDigest, userId)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *mySql) UpdateNotificationSettings(req *userEntity.NotificationSettingsReq, userId string) error {
+	ctx, cancelFunc := context.WithTimeout(context.TODO(), time.Second*60)
+	defer cancelFunc()
+
+	stmt := `
+        UPDATE Notification_Settings
+        SET new_comments = ?,
+            expired_tasks = ?,
+            reminder_tasks = ?,
+            va_accepting_task = ?,
+			tasks_assigned_va = ?,
+			subscription = ?
+        WHERE user_id = ?
+    `
+	query, err := m.conn.PrepareContext(ctx, stmt)
+	if err != nil {
+		return err
+	}
+	defer query.Close()
+
+	_, err = query.ExecContext(ctx, req.NewComments, req.ExpiredTasks, req.ReminderTasks, req.VaAcceptingTask, req.TaskAssingnedVa, req.Subscribtion, userId)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// auxilary function
+func convertToBool(value bool) bool {
+	return value == true
 }
