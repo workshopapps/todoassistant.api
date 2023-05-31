@@ -15,7 +15,6 @@
 *.out
 *.idea
 *.DS_Store
-*.vscode
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -23,3 +22,6 @@
 *app.env
 *tmp
 *.aws/
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore

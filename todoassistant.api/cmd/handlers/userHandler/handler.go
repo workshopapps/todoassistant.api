@@ -246,7 +246,7 @@ func (u *userHandler) GetSettings(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseEntity.BuildErrorResponse(http.StatusInternalServerError, "Cannot Get Reminder Settings", errRes, nil))
 		return
 	}
-	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Reminder Settings Fetched Successfully", response, nil))
+	c.JSON(http.StatusOK, ResponseEntity.BuildSuccessResponse(http.StatusOK, "Users Settings Fetched Successfully", response, nil))
 }
 func (u *userHandler) SetReminderSettings(c *gin.Context) {
 	var req userEntity.ReminderSettingsReq
